@@ -1,0 +1,211 @@
+# Frontend Developer Brief
+
+## 1. What We Are Building
+
+Build a local-first WEO validation review workbench.
+
+Current scope is frontend and interaction only:
+
+- Modern localhost/browser UI.
+- Mock data.
+- Mock draft generation.
+- Mock export state.
+- No real backend.
+- No real AI API.
+- No real Outlook / SharePoint integration.
+- No desktop packaging yet.
+
+The first implementation should create a professional three-column data review workbench:
+
+```text
+Left navigation -> Center review surface -> Right active draft panel
+```
+
+## 2. Current Stack Decision
+
+Use:
+
+- React
+- Vite
+- TypeScript
+- Zustand
+- ECharts
+- TanStack Table
+- Tailwind CSS
+- shadcn/ui + Radix UI
+
+Important work-computer finding:
+
+- npm package install works for React, Vite/TypeScript, ECharts, TanStack Table, and Zustand.
+- Running Vite binaries is blocked on the work computer by IT policy.
+- Development should proceed on an unrestricted machine for now.
+- Work-computer deployment should test prebuilt static output or request IT approval for package binary execution.
+
+See [work_computer_stack_smoke_test.md](work_computer_stack_smoke_test.md).
+
+## 3. Core Product Rules
+
+- Review unit is `sector + validation + indicator`.
+- AI never selects issues.
+- User visits pairs; `ReviewSurface` load success marks a pair as `visited`.
+- Visited pairs should be visually marked with subtle background/color coding.
+- User can `Keep` AI original text or edit draft text.
+- `kept` and `edited` both mean "will be raised," but they must have different markers before the indicator name.
+- Unkept and unedited drafts are ignored automatically.
+- Complete requires all flagged pairs visited.
+- If all pairs are visited and no kept/edited content exists, review completes with no email generated.
+- Right panel shows only the current active pair draft, not a list of all kept pairs.
+- Final removal/reordering happens in overall edit, not the active draft panel.
+
+## 4. Center Review Surface Requirements
+
+The center surface must include:
+
+- Active context header.
+- Flagged period / flagged data point count.
+- Validation explanation.
+- Recommended action.
+- ECharts line chart.
+- Current / previous / optional published table.
+- Issues report history panel.
+- Related indicators table.
+- Metadata accordion.
+
+Important behavior:
+
+- Related indicators depend only on indicator.
+- Issues report depends on validation + indicator pair.
+- Time period control changes display range only.
+- Evidence/highlight range is separate from display range.
+- Tables with time periods should initially scroll to the newest/rightmost period.
+- After user manually scrolls a table, do not immediately jump it back to the right.
+
+## 5. Chart And Highlight Rules
+
+Charts should support:
+
+- current / previous series by default.
+- optional published series via menu.
+- flagged point markers.
+- flagged period shading.
+- x-axis draggable range bar / data zoom.
+- y-axis auto-scale to visible data with modest padding.
+- multiple non-contiguous highlight intervals.
+
+Nice-to-have:
+
+- left-drag adds highlight range.
+- right-drag removes/shrinks highlight range.
+- if right-drag conflicts with browser behavior, provide toolbar modes for add/remove highlight.
+
+## 6. Issues Report Panel
+
+Add `IssuesReportPanel` between the line chart and related indicators.
+
+It shows prior issue explanations / confirmations for the current validation + indicator pair.
+
+Display:
+
+- time period.
+- explanation text.
+
+Text behavior:
+
+- 2-3 lines should be readable.
+- longer text should clamp/collapse with expand or popover.
+
+## 7. Visual Baseline
+
+Fonts:
+
+- Headings/titles: Arial, with Arial Black only for rare strong titles.
+- Body/table/navigation/draft text: Segoe UI.
+- Minimum font size: 11px.
+
+Colors:
+
+- Primary brand: `#004c97`
+- Secondary brand: `#009cde`
+- Avoid large saturated red/green/yellow/orange areas.
+- Use red/orange/yellow only for issue/warning semantics.
+
+Logo:
+
+- IMF / WEO identity is placeholder only for now.
+
+Responsive targets:
+
+- laptop fullscreen.
+- 3440 x 1440 ultrawide fullscreen.
+- half ultrawide window.
+
+## 8. First Build Sequence
+
+Follow [frontend_build_plan.md](frontend_build_plan.md).
+
+Recommended first implementation order:
+
+1. Scaffold frontend project.
+2. UI shell.
+3. Left navigation.
+4. Center review surface.
+5. Review state flow with local browser persistence.
+6. Active draft panel.
+7. Complete / overall edit.
+8. Evidence and highlighting.
+9. Integration readiness.
+
+Do not start real AI or real backend before the review flow works with mock data.
+
+## 9. Code Organization
+
+Code should be organized by long-term product module, not by slice.
+
+Key folders:
+
+```text
+frontend/src/components/layout
+frontend/src/components/navigation
+frontend/src/components/review-surface
+frontend/src/components/evidence
+frontend/src/components/draft
+frontend/src/components/completion
+frontend/src/components/shared
+frontend/src/state
+frontend/src/services
+frontend/src/data
+frontend/src/types
+frontend/src/styles
+```
+
+See [frontend_code_organization.md](frontend_code_organization.md).
+
+## 10. Must-Pass Checks For Early UI
+
+- Three columns do not overlap at laptop, half-ultrawide, and ultrawide widths.
+- No visible text below 11px.
+- Keyboard can traverse indicators, validations, and sectors.
+- Severity only filters validation list.
+- Indicator is single-select.
+- Related indicators ignore validation/severity changes.
+- Issues report changes with validation + indicator.
+- Table default scroll shows newest period.
+- Visited state survives reload in same browser/profile.
+- Kept and edited markers are distinguishable.
+- Complete remains unavailable until all flagged pairs visited.
+
+## 11. Reference Docs
+
+Detailed docs have been demoted to reference to keep the development root clean:
+
+- [reference/frontend_interaction_spec.md](reference/frontend_interaction_spec.md)
+- [reference/ui_component_inventory.md](reference/ui_component_inventory.md)
+- [reference/frontend_visual_design_baseline.md](reference/frontend_visual_design_baseline.md)
+- [reference/frontend_acceptance_checklist.md](reference/frontend_acceptance_checklist.md)
+- [reference/keyboard_accessibility_rules.md](reference/keyboard_accessibility_rules.md)
+- [reference/frontend_technology_options.md](reference/frontend_technology_options.md)
+- [reference/frontend_development_slices/](reference/frontend_development_slices/)
+
+Background PBI understanding is here:
+
+- [background/powerbi_report_understanding.md](background/powerbi_report_understanding.md)
