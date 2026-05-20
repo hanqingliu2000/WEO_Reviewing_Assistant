@@ -1,0 +1,15 @@
+:root {
+  --color-brand-primary: #004c97;
+  --color-brand-secondary: #009cde;
+  --color-ink: #172033;
+  --color-muted: #5d6b82;
+  --color-panel: #ffffff;
+  --color-page: #edf3f8;
+  --color-border: #c9d6e4;
+  --color-warning: #a15c00;
+  --shadow-panel: 0 18px 40px rgb(21 49 85 / 12%);
+  --radius-lg: 22px;
+  --radius-md: 14px;
+  --font-heading: Arial, sans-serif;
+  --font-body: "Segoe UI", sans-serif;
+}
