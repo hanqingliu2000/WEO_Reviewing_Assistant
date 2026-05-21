@@ -108,7 +108,7 @@ Keyboard behavior:
 | Selection | Affects | Does not affect |
 | --- | --- | --- |
 | Sector | validation list, indicator list, active context | submission status, related indicator definition |
-| Severity | validation list only | chart, tables, related indicators, status |
+| Severity marker/filter, if present | validation list display only | chart, tables, related indicators, status |
 | Validation | indicator list, flagged periods, explanation, draft context | related indicators |
 | Indicator | chart, tables, metadata, formula, related indicators | validation list |
 | Time period | displayed chart/table range | flagged point definition |
@@ -122,13 +122,13 @@ For the active pair, show:
 - flagged period and count,
 - validation explanation,
 - recommended action,
-- line chart,
 - current/previous/optional published table,
+- line chart,
 - issues report history,
 - related indicators,
 - formula / desk series / metadata.
 
-Time period controls change display range only. Evidence range and highlights are separate.
+The current/previous/optional published table appears above the line chart. Time period controls change display range only. Evidence range and highlights are separate.
 
 ## Issues Report History
 

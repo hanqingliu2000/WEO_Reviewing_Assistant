@@ -10,7 +10,7 @@ type PanelProps = {
 export function Panel({ title, eyebrow, actions, children, className = "", hideHeader = false }: PanelProps) {
   return (
     <section className={`panel ${className}`.trim()} aria-label={title}>
-      {hideHeader ? null : (
+      {!hideHeader ? (
         <div className="panel__header">
           <div>
             {eyebrow ? <p className="panel__eyebrow">{eyebrow}</p> : null}
@@ -18,7 +18,7 @@ export function Panel({ title, eyebrow, actions, children, className = "", hideH
           </div>
           {actions ? <div className="panel__actions">{actions}</div> : null}
         </div>
-      )}
+      ) : null}
       <div className="panel__body">{children}</div>
     </section>
   );

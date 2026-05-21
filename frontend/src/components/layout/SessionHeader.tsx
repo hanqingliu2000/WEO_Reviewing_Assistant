@@ -1,10 +1,7 @@
 import type { ReviewSession } from "../../types/review";
-import { CountPill } from "../shared/CountPill";
-import { StatusBadge } from "../shared/StatusBadge";
 
 type SessionHeaderProps = {
   session: ReviewSession;
-  flaggedPairCount: number;
 };
 
 function formatTimestamp(value: string) {
@@ -17,7 +14,7 @@ function formatTimestamp(value: string) {
   }).format(new Date(value));
 }
 
-export function SessionHeader({ session, flaggedPairCount }: SessionHeaderProps) {
+export function SessionHeader({ session }: SessionHeaderProps) {
   return (
     <header className="session-header">
       <div className="session-header__identity" aria-label="IMF WEO identity placeholder">
@@ -35,9 +32,6 @@ export function SessionHeader({ session, flaggedPairCount }: SessionHeaderProps)
           <span>{session.country.iso_code}</span>
           <strong>{session.country.name}</strong>
         </div>
-        <CountPill label="Flagged pairs" value={flaggedPairCount} />
-        <CountPill label="Quarterly data" value={session.has_quarterly_data ? "Yes" : "No"} />
-        <StatusBadge tone="info">{session.submission.status_label}</StatusBadge>
       </div>
 
       <div className="session-header__tools">

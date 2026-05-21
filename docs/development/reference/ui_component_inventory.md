@@ -221,7 +221,7 @@ Owns:
 
 Position:
 
-- between line chart and related indicators.
+- below the line chart and above related indicators.
 
 Rules:
 

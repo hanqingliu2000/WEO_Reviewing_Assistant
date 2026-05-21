@@ -2,7 +2,7 @@
 
 ## Owns
 
-`ReviewNavigator`, `SectorList`, `SeverityFilter`, `ValidationList`, and `IndicatorList`.
+`ReviewNavigator`, `SectorList`, `ValidationList`, and `IndicatorList`.
 
 ## Related Slices
 
@@ -11,8 +11,8 @@
 
 ## Rules To Preserve
 
-- Navigation hierarchy is `sector -> severity -> validation -> indicator`.
-- Severity only filters validation list.
+- Navigation hierarchy is `sector -> validation -> indicator`.
+- Severity is shown as marker metadata on validation rows.
 - Indicator is single-select.
-- Keyboard traversal moves through indicators, validations, then sectors.
+- Keyboard traversal moves through visible sectors, validations, and indicators with Arrow Up/Down.
 - Related indicators are not filtered by sector, severity, or validation.

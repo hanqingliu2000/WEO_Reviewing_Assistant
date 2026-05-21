@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
-import type { ReviewItem, ReviewItemDetail, ReviewSession } from "../../types/review";
-import { SeriesChart } from "../review-surface/SeriesChart";
+import { useMemo, useState } from "react";
+import type { CSSProperties, PointerEvent } from "react";
+import type { ReviewItem, ReviewSession } from "../../types/review";
 import { CountPill } from "../shared/CountPill";
+import { ReviewNavigator } from "../navigation/ReviewNavigator";
 import { StatusBadge } from "../shared/StatusBadge";
 import { Panel } from "./Panel";
 import { SessionHeader } from "./SessionHeader";
@@ -12,90 +13,102 @@ type AppShellProps = {
   activeDetail: ReviewItemDetail;
 };
 
-function countBySeverity(items: ReviewItem[]) {
-  return items.reduce<Record<string, number>>((counts, item) => {
-    counts[item.severity] = (counts[item.severity] ?? 0) + 1;
-    return counts;
-  }, {});
-}
+const LEFT_PANEL_MIN_WIDTH = 240;
+const LEFT_PANEL_MAX_WIDTH = 640;
 
-function uniqueSectors(items: ReviewItem[]) {
-  return Array.from(new Map(items.map((item) => [item.sector_code, item.sector_name])).entries());
-}
+export function AppShell({ session, reviewItems }: AppShellProps) {
+  const [activeReviewItemId, setActiveReviewItemId] = useState(reviewItems[0]?.review_item_id ?? "");
+  const [leftPanelWidth, setLeftPanelWidth] = useState(340);
+  const activeItem = useMemo(
+    () => reviewItems.find((item) => item.review_item_id === activeReviewItemId) ?? reviewItems[0],
+    [activeReviewItemId, reviewItems],
+  );
+  const placeholderVisitedItemIds = useMemo(
+    () => new Set(reviewItems.slice(1, 2).map((item) => item.review_item_id)),
+    [reviewItems],
+  );
+  const placeholderKeptItemIds = useMemo(
+    () => new Set(reviewItems.slice(5, 6).map((item) => item.review_item_id)),
+    [reviewItems],
+  );
+  const placeholderEditedItemIds = useMemo(
+    () => new Set(reviewItems.slice(7, 8).map((item) => item.review_item_id)),
+    [reviewItems],
+  );
 
-export function AppShell({ session, reviewItems, activeDetail }: AppShellProps) {
-  const tableRef = useRef<HTMLDivElement>(null);
-  const firstItem = reviewItems[0];
-  const severityCounts = countBySeverity(reviewItems);
-  const sectors = uniqueSectors(reviewItems);
-  const tablePeriods = activeDetail.main_series.current.points.map((point) => point.period);
-  const tableRows = [
-    { label: "Current", points: activeDetail.main_series.current.points },
-    { label: "Previous", points: activeDetail.main_series.previous.points },
-    ...(activeDetail.main_series.published
-      ? [{ label: "Published", points: activeDetail.main_series.published.points }]
-      : []),
-  ];
-  const tableGridStyle = { gridTemplateColumns: `104px repeat(${tablePeriods.length}, 88px)` };
-
-  useEffect(() => {
-    if (tableRef.current) {
-      tableRef.current.scrollLeft = tableRef.current.scrollWidth;
-    }
-  }, [activeDetail]);
+  if (!activeItem) {
+    return null;
+  }
 
   return (
     <main className="app-shell">
-      <SessionHeader session={session} flaggedPairCount={reviewItems.length} />
+      <SessionHeader session={session} />
 
-      <div className="workbench-layout" aria-label="WEO review workbench">
+      <div
+        className="workbench-layout"
+        aria-label="WEO review workbench"
+        style={{
+          "--left-panel-width": `${leftPanelWidth}px`,
+        } as CSSProperties}
+      >
         <Panel
           title="Review Queue"
-          eyebrow="Navigation placeholder"
-          actions={<StatusBadge tone="brand">All severities</StatusBadge>}
           className="workbench-panel workbench-panel--left"
+          hideHeader
         >
-          <div className="severity-summary" aria-label="Severity summary">
-            {Object.entries(severityCounts).map(([severity, count]) => (
-              <CountPill key={severity} label={severity} value={count} />
-            ))}
-          </div>
-
-          <div className="nav-section" aria-label="Sector placeholder list">
-            <h3>Sectors</h3>
-            <div className="sector-list">
-              {sectors.slice(0, 6).map(([code, name], index) => (
-                <button className={index === 0 ? "sector-row sector-row--active" : "sector-row"} key={code} type="button">
-                  <span>{code}</span>
-                  <strong>{name.replace(`${code} - `, "")}</strong>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="nav-section" aria-label="Validation placeholder">
-            <h3>Selected validation</h3>
-            <p>{firstItem.validation_name}</p>
-          </div>
+          <ReviewNavigator
+            activeReviewItemId={activeReviewItemId}
+            editedItemIds={placeholderEditedItemIds}
+            hasQuarterlyData={session.has_quarterly_data}
+            keptItemIds={placeholderKeptItemIds}
+            onActiveReviewItemIdChange={setActiveReviewItemId}
+            reviewItems={reviewItems}
+            visitedItemIds={placeholderVisitedItemIds}
+          />
         </Panel>
+
+        <div
+          aria-label="Resize review navigation"
+          className="panel-resizer"
+          onPointerDown={(event: PointerEvent<HTMLDivElement>) => {
+            event.currentTarget.setPointerCapture(event.pointerId);
+            event.preventDefault();
+          }}
+          onPointerMove={(event: PointerEvent<HTMLDivElement>) => {
+            if (event.buttons !== 1) {
+              return;
+            }
+
+            const nextWidth = Math.min(Math.max(event.clientX - 16, LEFT_PANEL_MIN_WIDTH), LEFT_PANEL_MAX_WIDTH);
+            setLeftPanelWidth(nextWidth);
+          }}
+          role="separator"
+          tabIndex={0}
+        />
 
         <Panel
           title="Review Surface"
+          eyebrow="Active pair placeholder"
+          actions={<StatusBadge tone="warning">{activeItem.flagged_data_point_count} flagged points</StatusBadge>}
           className="workbench-panel workbench-panel--center"
           hideHeader
         >
           <div className="active-context">
             <div>
-              <p>
-                {firstItem.sector_name} &gt; {firstItem.validation_name} &gt; {firstItem.indicator_name}
-              </p>
-              <h3>{firstItem.indicator_name}</h3>
+              <p>{activeItem.sector_name}</p>
+              <h3>{activeItem.indicator_name}</h3>
             </div>
-            <StatusBadge tone="warning">{firstItem.flagged_periods.length} flagged periods</StatusBadge>
+            <StatusBadge tone={activeItem.severity === "Critical" ? "warning" : "info"}>{activeItem.severity}</StatusBadge>
           </div>
 
-          <div className="table-placeholder" ref={tableRef} aria-label="Current previous published table placeholder">
-            <div className="table-row table-row--header" style={tableGridStyle}>
+          <div className="surface-strip" aria-label="Active review summary">
+            <CountPill label="Validation" value={activeItem.validation_id.replaceAll("_", " ")} />
+            <CountPill label="Flagged periods" value={activeItem.flagged_periods.join(", ")} />
+            <CountPill label="Published series" value={activeItem.has_published ? "Available" : "Missing"} />
+          </div>
+
+          <div className="table-placeholder" aria-label="Current previous published table placeholder">
+            <div className="table-row table-row--header">
               <span>Series</span>
               {tablePeriods.map((period) => (
                 <span key={period}>{period}</span>
@@ -117,7 +130,12 @@ export function AppShell({ session, reviewItems, activeDetail }: AppShellProps) 
             ))}
           </div>
 
-          <SeriesChart flaggedPeriods={firstItem.flagged_periods} seriesSet={activeDetail.main_series} />
+          <div className="chart-placeholder" aria-label="Line chart placeholder">
+            <div className="chart-grid" aria-hidden="true" />
+            <div className="chart-line chart-line--previous" aria-hidden="true" />
+            <div className="chart-line chart-line--current" aria-hidden="true" />
+            <span>Line chart surface</span>
+          </div>
         </Panel>
 
         <Panel
@@ -126,7 +144,7 @@ export function AppShell({ session, reviewItems, activeDetail }: AppShellProps) 
           hideHeader
         >
           <div className="draft-context">
-            <h3>{firstItem.indicator_name}</h3>
+            <h3>{activeItem.indicator_name}</h3>
             <p>
               Draft generation, keep/edit state, and final output controls will attach here in later slices. This panel
               stays scoped to the active validation + indicator pair.
@@ -134,7 +152,7 @@ export function AppShell({ session, reviewItems, activeDetail }: AppShellProps) 
           </div>
 
           <div className="draft-box" aria-label="Draft text placeholder">
-            Could the team clarify the driver of the flagged movement in {firstItem.flagged_periods.join(", ")}?
+            Could the team clarify the driver of the flagged movement in {activeItem.flagged_periods.join(", ")}?
           </div>
 
           <div className="draft-actions">

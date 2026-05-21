@@ -25,6 +25,7 @@ Connect navigation and review surface through frontend session state.
 
 - A pair becomes `visited` only when `ReviewSurface` loads successfully.
 - Clicking or focusing a row is not enough if the center load fails.
+- Keyboard focus movement through the left hierarchy does not by itself mark a pair visited.
 - `Complete` requires all flagged pairs visited.
 - No persistent skip state.
 

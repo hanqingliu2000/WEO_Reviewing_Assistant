@@ -65,8 +65,8 @@ The center surface must include:
 - Flagged period / flagged data point count.
 - Validation explanation.
 - Recommended action.
-- ECharts line chart.
 - Current / previous / optional published table.
+- ECharts line chart.
 - Issues report history panel.
 - Related indicators table.
 - Metadata accordion.
@@ -78,6 +78,7 @@ Important behavior:
 - Time period control changes display range only.
 - Evidence/highlight range is separate from display range.
 - Tables with time periods should initially scroll to the newest/rightmost period.
+- Current / previous / optional published table appears above the line chart.
 - After user manually scrolls a table, do not immediately jump it back to the right.
 
 ## 5. Chart And Highlight Rules
@@ -185,7 +186,8 @@ See [frontend_code_organization.md](frontend_code_organization.md).
 - Three columns do not overlap at laptop, half-ultrawide, and ultrawide widths.
 - No visible text below 11px.
 - Keyboard can traverse indicators, validations, and sectors.
-- Severity only filters validation list.
+- Left navigation hierarchy is sector, validation, then indicator.
+- Severity is a marker/metadata, not a required hierarchy level.
 - Indicator is single-select.
 - Related indicators ignore validation/severity changes.
 - Issues report changes with validation + indicator.

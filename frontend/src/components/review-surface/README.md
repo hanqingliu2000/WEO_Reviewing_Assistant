@@ -2,7 +2,7 @@
 
 ## Owns
 
-Center review area: active context, chart, current/previous/published table, issues report history, related indicators, metadata, and time period controls.
+Center review area: active context, current/previous/published table, chart, issues report history, related indicators, metadata, and time period controls.
 
 ## Related Slices
 
