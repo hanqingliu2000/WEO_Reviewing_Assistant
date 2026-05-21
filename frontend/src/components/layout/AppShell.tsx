@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent } from "react";
 import type { ReviewItem, ReviewItemDetail, ReviewSession } from "../../types/review";
-import { CountPill } from "../shared/CountPill";
 import { ReviewNavigator } from "../navigation/ReviewNavigator";
+import { SeriesChart } from "../review-surface/SeriesChart";
 import { StatusBadge } from "../shared/StatusBadge";
 import { Panel } from "./Panel";
 import { SessionHeader } from "./SessionHeader";
@@ -17,6 +17,7 @@ const LEFT_PANEL_MIN_WIDTH = 240;
 const LEFT_PANEL_MAX_WIDTH = 640;
 
 export function AppShell({ session, reviewItems, reviewItemDetails }: AppShellProps) {
+  const tableRef = useRef<HTMLDivElement>(null);
   const [activeReviewItemId, setActiveReviewItemId] = useState(reviewItems[0]?.review_item_id ?? "");
   const [leftPanelWidth, setLeftPanelWidth] = useState(340);
   const activeItem = useMemo(
@@ -33,7 +34,7 @@ export function AppShell({ session, reviewItems, reviewItemDetails }: AppShellPr
     : [];
   const tablePeriods = activeDetail?.main_series.current.points.map((point) => point.period) ?? [];
   const tableGridStyle = {
-    gridTemplateColumns: `1.3fr repeat(${tablePeriods.length}, minmax(72px, 1fr))`,
+    gridTemplateColumns: `104px repeat(${tablePeriods.length}, 88px)`,
   } as CSSProperties;
   const placeholderVisitedItemIds = useMemo(
     () => new Set(reviewItems.slice(1, 2).map((item) => item.review_item_id)),
@@ -48,16 +49,22 @@ export function AppShell({ session, reviewItems, reviewItemDetails }: AppShellPr
     [reviewItems],
   );
 
+  useEffect(() => {
+    if (tableRef.current) {
+      tableRef.current.scrollLeft = tableRef.current.scrollWidth;
+    }
+  }, [activeDetail]);
+
   if (!activeItem || !activeDetail) {
     return null;
   }
 
   return (
-    <main className="app-shell">
+    <main className="flex h-screen flex-col gap-4 overflow-hidden bg-[var(--color-page)] p-4 text-[var(--color-ink)]">
       <SessionHeader session={session} />
 
       <div
-        className="workbench-layout"
+        className="grid min-h-0 flex-1 gap-4 overflow-hidden [grid-template-columns:var(--left-panel-width,340px)_6px_minmax(480px,1fr)_minmax(260px,340px)] min-[2100px]:[grid-template-columns:var(--left-panel-width,340px)_6px_minmax(720px,1fr)_minmax(320px,420px)] max-[1220px]:[grid-template-columns:var(--left-panel-width,340px)_6px_minmax(420px,1fr)_minmax(230px,275px)] max-[980px]:[grid-template-columns:1fr]"
         aria-label="WEO review workbench"
         style={{
           "--left-panel-width": `${leftPanelWidth}px`,
@@ -65,7 +72,7 @@ export function AppShell({ session, reviewItems, reviewItemDetails }: AppShellPr
       >
         <Panel
           title="Review Queue"
-          className="workbench-panel workbench-panel--left"
+          bodyClassName="overflow-hidden px-0 py-2"
           hideHeader
         >
           <ReviewNavigator
@@ -81,7 +88,7 @@ export function AppShell({ session, reviewItems, reviewItemDetails }: AppShellPr
 
         <div
           aria-label="Resize review navigation"
-          className="panel-resizer"
+          className="self-stretch touch-none cursor-col-resize rounded-sm hover:bg-[rgb(0_76_151_/_16%)] focus-visible:bg-[rgb(0_76_151_/_16%)] focus-visible:outline-none max-[980px]:hidden"
           onPointerDown={(event: PointerEvent<HTMLDivElement>) => {
             event.currentTarget.setPointerCapture(event.pointerId);
             event.preventDefault();
@@ -100,40 +107,58 @@ export function AppShell({ session, reviewItems, reviewItemDetails }: AppShellPr
 
         <Panel
           title="Review Surface"
-          eyebrow="Active pair placeholder"
-          actions={<StatusBadge tone="warning">{activeItem.flagged_data_point_count} flagged points</StatusBadge>}
-          className="workbench-panel workbench-panel--center"
+          bodyClassName="overflow-hidden"
           hideHeader
         >
-          <div className="active-context">
+          <div className="flex items-start justify-between gap-4 border-l-4 border-[var(--color-brand-primary)] bg-[var(--color-panel-muted)] p-3">
             <div>
-              <p>{activeItem.sector_name}</p>
-              <h3>{activeItem.indicator_name}</h3>
+              <p className="text-xs text-[var(--color-muted)]">
+                {activeItem.sector_name} &gt; {activeItem.validation_name} &gt; {activeItem.indicator_name}
+              </p>
+              <h3 className="text-sm">{activeItem.indicator_name}</h3>
             </div>
-            <StatusBadge tone={activeItem.severity === "Critical" ? "warning" : "info"}>{activeItem.severity}</StatusBadge>
+            <StatusBadge tone="warning">{activeItem.flagged_periods.length} flagged periods</StatusBadge>
           </div>
 
-          <div className="surface-strip" aria-label="Active review summary">
-            <CountPill label="Validation" value={activeItem.validation_id.replaceAll("_", " ")} />
-            <CountPill label="Flagged periods" value={activeItem.flagged_periods.join(", ")} />
-            <CountPill label="Published series" value={activeItem.has_published ? "Available" : "Missing"} />
-          </div>
-
-          <div className="table-placeholder" aria-label="Current previous published table placeholder">
-            <div className="table-row table-row--header">
-              <span>Series</span>
+          <div
+            className="shrink-0 overflow-x-auto overflow-y-hidden rounded-md border border-[var(--color-border)] bg-white"
+            ref={tableRef}
+            aria-label="Current previous published table placeholder"
+          >
+            <div
+              className="grid min-h-7 w-max min-w-full items-center border-t-0 bg-[var(--color-panel-muted)] text-[11px] font-extrabold uppercase text-[var(--color-muted)]"
+              style={tableGridStyle}
+            >
+              <span className="sticky left-0 z-20 overflow-hidden bg-[var(--color-panel-muted)] px-2.5 py-[5px] text-ellipsis whitespace-nowrap shadow-[1px_0_0_var(--color-border)]">
+                Series
+              </span>
               {tablePeriods.map((period) => (
-                <span key={period}>{period}</span>
+                <span className="overflow-hidden px-2.5 py-[5px] text-ellipsis whitespace-nowrap" key={period}>
+                  {period}
+                </span>
               ))}
             </div>
             {tableRows.map((row) => (
-              <div className="table-row" key={row.label} style={tableGridStyle}>
-                <strong>{row.label}</strong>
+              <div
+                className="grid min-h-7 w-max min-w-full items-center border-t border-[var(--color-border)]"
+                key={row.label}
+                style={tableGridStyle}
+              >
+                <strong className="sticky left-0 z-10 overflow-hidden bg-white px-2.5 py-[5px] text-ellipsis whitespace-nowrap shadow-[1px_0_0_var(--color-border)]">
+                  {row.label}
+                </strong>
                 {tablePeriods.map((period) => {
                   const value = row.points.find((point) => point.period === period)?.value;
 
                   return (
-                    <span className={activeItem.flagged_periods.includes(period) ? "flagged-cell" : undefined} key={period}>
+                    <span
+                      className={`overflow-hidden px-2.5 py-[5px] text-ellipsis whitespace-nowrap ${
+                        activeItem.flagged_periods.includes(period)
+                          ? "bg-[var(--color-warning-bg)] font-extrabold text-[var(--color-warning)]"
+                          : ""
+                      }`}
+                      key={period}
+                    >
                       {value === null || value === undefined ? "n/a" : value.toFixed(1)}
                     </span>
                   );
@@ -142,34 +167,41 @@ export function AppShell({ session, reviewItems, reviewItemDetails }: AppShellPr
             ))}
           </div>
 
-          <div className="chart-placeholder" aria-label="Line chart placeholder">
-            <div className="chart-grid" aria-hidden="true" />
-            <div className="chart-line chart-line--previous" aria-hidden="true" />
-            <div className="chart-line chart-line--current" aria-hidden="true" />
-            <span>Line chart surface</span>
-          </div>
+          <SeriesChart flaggedPeriods={activeItem.flagged_periods} seriesSet={activeDetail.main_series} />
         </Panel>
 
         <Panel
           title="Active Draft"
-          className="workbench-panel workbench-panel--right"
           hideHeader
         >
-          <div className="draft-context">
-            <h3>{activeItem.indicator_name}</h3>
-            <p>
+          <div className="grid gap-2">
+            <h3 className="text-sm">{activeItem.indicator_name}</h3>
+            <p className="text-xs text-[var(--color-muted)]">
               Draft generation, keep/edit state, and final output controls will attach here in later slices. This panel
               stays scoped to the active validation + indicator pair.
             </p>
           </div>
 
-          <div className="draft-box" aria-label="Draft text placeholder">
+          <div
+            className="grid min-h-[210px] content-start gap-2 rounded-md border border-[var(--color-border)] bg-[var(--color-panel-muted)] p-3 text-[13px] leading-[1.55] text-[var(--color-ink)]"
+            aria-label="Draft text placeholder"
+          >
             Could the team clarify the driver of the flagged movement in {activeItem.flagged_periods.join(", ")}?
           </div>
 
-          <div className="draft-actions">
-            <button type="button">Generate mock draft</button>
-            <button type="button">Keep</button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              className="min-h-[30px] rounded-md border border-[var(--color-border-strong)] bg-[var(--color-panel)] px-2.5 py-[5px] text-xs font-bold text-[var(--color-ink)] hover:border-[var(--color-brand-primary)]"
+              type="button"
+            >
+              Generate mock draft
+            </button>
+            <button
+              className="min-h-[30px] rounded-md border border-[var(--color-border-strong)] bg-[var(--color-panel)] px-2.5 py-[5px] text-xs font-bold text-[var(--color-ink)] hover:border-[var(--color-brand-primary)]"
+              type="button"
+            >
+              Keep
+            </button>
           </div>
         </Panel>
       </div>

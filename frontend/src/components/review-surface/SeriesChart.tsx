@@ -75,5 +75,11 @@ export function SeriesChart({ flaggedPeriods, seriesSet }: SeriesChartProps) {
     };
   }, [flaggedPeriodSet, seriesSet]);
 
-  return <div className="series-chart" ref={chartRef} aria-label="Line chart" />;
+  return (
+    <div
+      className="min-h-0 flex-1 overflow-hidden rounded-md border border-[var(--color-border)] bg-white"
+      ref={chartRef}
+      aria-label="Line chart"
+    />
+  );
 }

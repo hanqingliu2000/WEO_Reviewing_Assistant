@@ -18,7 +18,10 @@ export function IndicatorList({
   visitedItemIds,
 }: IndicatorListProps) {
   return (
-    <div className="tree-children tree-children--indicators" role="group">
+    <div
+      className="relative ml-6 grid gap-0.5 pl-3 before:absolute before:top-0 before:bottom-2 before:left-0 before:w-px before:bg-[var(--color-border)]"
+      role="group"
+    >
       {indicators.map((item) => {
         const isActive = item.review_item_id === activeReviewItemId;
         const isVisited = visitedItemIds?.has(item.review_item_id);
@@ -29,23 +32,27 @@ export function IndicatorList({
         return (
           <button
             aria-current={isActive ? "true" : undefined}
-            className={[
-              "tree-row",
-              "tree-row--indicator",
-              isActive ? "tree-row--active" : "",
-              isVisited ? "tree-row--visited" : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
+            className={`grid min-h-[30px] w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-sm border bg-transparent p-1.5 pl-2 text-left transition-colors hover:border-[var(--color-brand-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-secondary)] ${
+              isActive
+                ? "border-[rgb(0_76_151_/_20%)] bg-[var(--color-brand-bg)] text-[var(--color-ink)]"
+                : "border-transparent text-[var(--color-ink)]"
+            } ${isVisited ? "text-[var(--color-subtle)]" : ""}`}
+            data-tree-row="true"
             key={item.review_item_id}
             onClick={() => onActivateReviewItem(item.review_item_id)}
             type="button"
           >
-            <strong title={item.indicator_name}>{item.indicator_id}</strong>
+            <strong className="[overflow-wrap:anywhere] text-xs leading-[1.3] whitespace-normal" title={item.indicator_name}>
+              {item.indicator_id}
+            </strong>
             {statusLabel ? (
               <span
                 aria-label={statusLabel}
-                className={isEdited ? "issue-status issue-status--edited" : "issue-status issue-status--kept"}
+                className={`inline-grid h-[22px] w-[22px] place-items-center justify-self-end rounded-full text-[13px] font-extrabold ${
+                  isEdited
+                    ? "bg-[var(--color-info-bg)] text-[#075f82]"
+                    : "bg-[var(--color-brand-bg)] text-[var(--color-brand-primary)]"
+                }`}
                 title={statusLabel}
               >
                 {isEdited ? "✎" : "✓"}

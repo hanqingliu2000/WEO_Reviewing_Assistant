@@ -39,18 +39,28 @@ export function SectorList({
         const isExpanded = expandedSectorIds.has(sector.sectorCode);
 
         return (
-          <div className="tree-group" key={sector.sectorCode}>
+          <div className="relative grid gap-0.5" key={sector.sectorCode}>
             <button
               aria-expanded={isExpanded}
-              className={isActive ? "tree-row tree-row--sector tree-row--active" : "tree-row tree-row--sector"}
+              className={`grid min-h-9 w-full grid-cols-[22px_36px_minmax(0,1fr)] items-center gap-2 rounded-md border p-1.5 pl-2 text-left text-[var(--color-ink)] transition-colors hover:border-[var(--color-brand-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-secondary)] ${
+                isActive
+                  ? "border-[rgb(0_76_151_/_20%)] bg-[var(--color-brand-bg)]"
+                  : "border-transparent bg-[#eef3f8]"
+              }`}
+              data-tree-row="true"
               onClick={() => onToggleSector(sector.sectorCode)}
               type="button"
             >
-              <span className="tree-toggle" aria-hidden="true">
+              <span
+                className="inline-grid h-[18px] w-[18px] place-items-center rounded-sm border border-[var(--color-border-strong)] bg-white text-xs leading-none text-[var(--color-muted)]"
+                aria-hidden="true"
+              >
                 {isExpanded ? "-" : "+"}
               </span>
-              <span>{sector.sectorCode}</span>
-              <strong>{sector.sectorName.replace(`${sector.sectorCode} - `, "")}</strong>
+              <span className="text-[11px] font-extrabold text-[var(--color-brand-primary)]">{sector.sectorCode}</span>
+              <strong className="[overflow-wrap:anywhere] text-xs leading-[1.3] whitespace-normal">
+                {sector.sectorName.replace(`${sector.sectorCode} - `, "")}
+              </strong>
             </button>
 
             {isExpanded ? (

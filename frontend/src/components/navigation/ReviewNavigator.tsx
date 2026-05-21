@@ -20,7 +20,7 @@ function handleNavigationKeyDown(event: KeyboardEvent<HTMLDivElement>) {
   }
 
   event.preventDefault();
-  const rows = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>(".tree-row"));
+  const rows = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>("[data-tree-row='true']"));
   const currentIndex = rows.findIndex((row) => row === document.activeElement);
 
   if (currentIndex === -1) {
@@ -56,7 +56,7 @@ export function ReviewNavigator({
     setExpandedValidationIds(new Set(allValidationIds));
   }, [allSectorIds, allValidationIds]);
 
-  const allCollapsed = expandedSectorIds.size === 0 && expandedValidationIds.size === 0;
+  const allCollapsed = expandedSectorIds.size === 0;
   const allExpanded = expandedSectorIds.size === allSectorIds.length && expandedValidationIds.size === allValidationIds.length;
 
   function toggleSector(sectorCode: string) {
@@ -84,10 +84,10 @@ export function ReviewNavigator({
   }
 
   return (
-    <div className="navigator">
+    <div className="flex min-h-0 flex-1 flex-col gap-0">
       <div
         aria-label="Review hierarchy"
-        className="hierarchy-tree"
+        className="grid min-h-0 flex-1 auto-rows-max content-start gap-0.5 overflow-auto px-2 pb-2"
         onKeyDown={handleNavigationKeyDown}
         role="tree"
       >
@@ -105,18 +105,19 @@ export function ReviewNavigator({
         />
       </div>
 
-      <div className="navigator-actions" aria-label="Navigation tree controls">
+      <div className="grid shrink-0 grid-cols-2 gap-2 border-t border-[var(--color-border)] bg-[var(--color-panel)] p-2" aria-label="Navigation tree controls">
         <button
+          className="min-h-[30px] rounded-md border border-[var(--color-border-strong)] bg-white text-xs font-bold text-[var(--color-ink)] enabled:hover:border-[var(--color-brand-primary)] enabled:hover:text-[var(--color-brand-primary)] disabled:cursor-default disabled:opacity-[0.45]"
           disabled={allCollapsed}
           onClick={() => {
             setExpandedSectorIds(new Set());
-            setExpandedValidationIds(new Set());
           }}
           type="button"
         >
           Collapse all
         </button>
         <button
+          className="min-h-[30px] rounded-md border border-[var(--color-border-strong)] bg-white text-xs font-bold text-[var(--color-ink)] enabled:hover:border-[var(--color-brand-primary)] enabled:hover:text-[var(--color-brand-primary)] disabled:cursor-default disabled:opacity-[0.45]"
           disabled={allExpanded}
           onClick={() => {
             setExpandedSectorIds(new Set(allSectorIds));
