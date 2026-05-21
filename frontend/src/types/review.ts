@@ -115,6 +115,10 @@ export type ReviewItem = {
   indicator_id: string;
   indicator_name: string;
   frequency: Frequency;
+  flagged_periods: string[];
+  flagged_data_point_count: number;
+  has_published: boolean;
+  has_related_indicators: boolean;
 };
 
 /**
@@ -143,7 +147,10 @@ export type TimeSeriesPoint = {
  */
 export type TimeSeries = {
   series_id: string;
-  name: string;
+  indicator_id: string;
+  indicator_name: string;
+  frequency: Frequency;
+  name?: string;
   points: TimeSeriesPoint[];
 };
 
@@ -155,11 +162,20 @@ export type TimeSeries = {
  * - Current and previous should exist for every displayed indicator.
  * - Published is optional and can be enabled later from an options menu.
  */
-export type SeriesBundle = {
+export type IndicatorSeriesSet = {
+  indicator_id: string;
+  indicator_name: string;
+  descriptor?: string;
+  formula?: string;
+  desk_series?: string;
   current: TimeSeries;
   previous: TimeSeries;
   published?: TimeSeries;
 };
+
+export type RelatedIndicatorSeries = IndicatorSeriesSet;
+
+export type SeriesBundle = Pick<IndicatorSeriesSet, "current" | "previous" | "published">;
 
 /**
  * Indicator display payload for the center review surface.
@@ -218,14 +234,10 @@ export type IssueReportEntry = {
  */
 export type ReviewItemDetail = {
   review_item: ReviewItem;
-  flagged_periods: string[];
-  flagged_data_point_count: number;
-  has_published: boolean;
-  has_related_indicators: boolean;
   recommended_action: string;
-  main_indicator: IndicatorDisplayData;
+  main_series: IndicatorSeriesSet;
   issue_report_entries: IssueReportEntry[];
-  related_indicators: RelatedIndicatorData[];
+  related_indicators: RelatedIndicatorSeries[];
 };
 
 /**
