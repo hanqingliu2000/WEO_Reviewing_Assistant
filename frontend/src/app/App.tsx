@@ -6,7 +6,7 @@ export function App() {
     <AppShell
       session={mockReviewSession}
       reviewItems={mockReviewItems}
-      activeDetail={mockReviewItemDetails[mockReviewItems[0].review_item_id]}
+      reviewItemDetails={mockReviewItemDetails}
     />
   );
 }
