@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent } from "react";
-import type { ReviewItem, ReviewItemDetail, ReviewSession } from "../../types/review";
-import { ReviewNavigator } from "../navigation/ReviewNavigator";
-import { SeriesChart } from "../review-surface/SeriesChart";
-import { StatusBadge } from "../shared/StatusBadge";
-import { Panel } from "./Panel";
-import { SessionHeader } from "./SessionHeader";
+import { Panel } from "../../../shared/ui/Panel";
+import { StatusBadge } from "../../../shared/ui/StatusBadge";
+import type { ReviewItem, ReviewItemDetail, ReviewSession } from "../types/review";
+import { SessionHeader } from "./layout/SessionHeader";
+import { ReviewNavigator } from "./navigation/ReviewNavigator";
+import { SeriesChart } from "./review-surface/SeriesChart";
 
-type AppShellProps = {
+type ReviewWorkspaceProps = {
   session: ReviewSession;
   reviewItems: ReviewItem[];
   reviewItemDetails: Record<string, ReviewItemDetail>;
@@ -16,7 +16,7 @@ type AppShellProps = {
 const LEFT_PANEL_MIN_WIDTH = 240;
 const LEFT_PANEL_MAX_WIDTH = 640;
 
-export function AppShell({ session, reviewItems, reviewItemDetails }: AppShellProps) {
+export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: ReviewWorkspaceProps) {
   const tableRef = useRef<HTMLDivElement>(null);
   const [activeReviewItemId, setActiveReviewItemId] = useState(reviewItems[0]?.review_item_id ?? "");
   const [leftPanelWidth, setLeftPanelWidth] = useState(340);

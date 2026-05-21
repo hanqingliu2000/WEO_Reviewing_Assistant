@@ -1,4 +1,4 @@
-import type { NavigationSector } from "./navigationTree";
+import type { NavigationSector } from "../../runtime/navigationTree";
 import { ValidationList } from "./ValidationList";
 
 type SectorListProps = {

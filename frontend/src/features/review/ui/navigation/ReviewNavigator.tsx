@@ -1,7 +1,7 @@
 import type { KeyboardEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import type { ReviewItem } from "../../types/review";
-import { buildNavigationTree } from "./navigationTree";
+import { buildNavigationTree } from "../../runtime/navigationTree";
 import { SectorList } from "./SectorList";
 
 type ReviewNavigatorProps = {

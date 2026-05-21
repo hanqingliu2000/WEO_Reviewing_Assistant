@@ -1,4 +1,4 @@
-import type { NavigationValidation } from "./navigationTree";
+import type { NavigationValidation } from "../../runtime/navigationTree";
 import { IndicatorList } from "./IndicatorList";
 
 type ValidationListProps = {

@@ -1,4 +1,4 @@
-import type { ReviewItem } from "../../types/review";
+import type { ReviewItem } from "../types/review";
 
 export type NavigationValidation = {
   nodeId: string;
