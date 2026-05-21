@@ -1,4 +1,6 @@
-import type { ReviewItem, ReviewSession } from "../../types/review";
+import { useEffect, useRef } from "react";
+import type { ReviewItem, ReviewItemDetail, ReviewSession } from "../../types/review";
+import { SeriesChart } from "../review-surface/SeriesChart";
 import { CountPill } from "../shared/CountPill";
 import { StatusBadge } from "../shared/StatusBadge";
 import { Panel } from "./Panel";
@@ -7,6 +9,7 @@ import { SessionHeader } from "./SessionHeader";
 type AppShellProps = {
   session: ReviewSession;
   reviewItems: ReviewItem[];
+  activeDetail: ReviewItemDetail;
 };
 
 function countBySeverity(items: ReviewItem[]) {
@@ -20,10 +23,26 @@ function uniqueSectors(items: ReviewItem[]) {
   return Array.from(new Map(items.map((item) => [item.sector_code, item.sector_name])).entries());
 }
 
-export function AppShell({ session, reviewItems }: AppShellProps) {
+export function AppShell({ session, reviewItems, activeDetail }: AppShellProps) {
+  const tableRef = useRef<HTMLDivElement>(null);
   const firstItem = reviewItems[0];
   const severityCounts = countBySeverity(reviewItems);
   const sectors = uniqueSectors(reviewItems);
+  const tablePeriods = activeDetail.main_series.current.points.map((point) => point.period);
+  const tableRows = [
+    { label: "Current", points: activeDetail.main_series.current.points },
+    { label: "Previous", points: activeDetail.main_series.previous.points },
+    ...(activeDetail.main_series.published
+      ? [{ label: "Published", points: activeDetail.main_series.published.points }]
+      : []),
+  ];
+  const tableGridStyle = { gridTemplateColumns: `104px repeat(${tablePeriods.length}, 88px)` };
+
+  useEffect(() => {
+    if (tableRef.current) {
+      tableRef.current.scrollLeft = tableRef.current.scrollWidth;
+    }
+  }, [activeDetail]);
 
   return (
     <main className="app-shell">
@@ -62,56 +81,49 @@ export function AppShell({ session, reviewItems }: AppShellProps) {
 
         <Panel
           title="Review Surface"
-          eyebrow="Active pair placeholder"
-          actions={<StatusBadge tone="warning">{firstItem.flagged_data_point_count} flagged points</StatusBadge>}
           className="workbench-panel workbench-panel--center"
+          hideHeader
         >
           <div className="active-context">
             <div>
-              <p>{firstItem.sector_name}</p>
+              <p>
+                {firstItem.sector_name} &gt; {firstItem.validation_name} &gt; {firstItem.indicator_name}
+              </p>
               <h3>{firstItem.indicator_name}</h3>
             </div>
-            <StatusBadge tone={firstItem.severity === "Critical" ? "warning" : "info"}>{firstItem.severity}</StatusBadge>
+            <StatusBadge tone="warning">{firstItem.flagged_periods.length} flagged periods</StatusBadge>
           </div>
 
-          <div className="surface-strip" aria-label="Active review summary">
-            <CountPill label="Validation" value={firstItem.validation_id.replaceAll("_", " ")} />
-            <CountPill label="Flagged periods" value={firstItem.flagged_periods.join(", ")} />
-            <CountPill label="Published series" value={firstItem.has_published ? "Available" : "Missing"} />
-          </div>
-
-          <div className="chart-placeholder" aria-label="Line chart placeholder">
-            <div className="chart-grid" aria-hidden="true" />
-            <div className="chart-line chart-line--previous" aria-hidden="true" />
-            <div className="chart-line chart-line--current" aria-hidden="true" />
-            <span>Line chart surface</span>
-          </div>
-
-          <div className="table-placeholder" aria-label="Current previous published table placeholder">
-            <div className="table-row table-row--header">
+          <div className="table-placeholder" ref={tableRef} aria-label="Current previous published table placeholder">
+            <div className="table-row table-row--header" style={tableGridStyle}>
               <span>Series</span>
-              {["2024", "2025", "2026", "2027", "2028"].map((period) => (
+              {tablePeriods.map((period) => (
                 <span key={period}>{period}</span>
               ))}
             </div>
-            {["Current", "Previous", "Published"].map((label) => (
-              <div className="table-row" key={label}>
-                <strong>{label}</strong>
-                <span>112.4</span>
-                <span className="flagged-cell">118.9</span>
-                <span className="flagged-cell">123.2</span>
-                <span>126.1</span>
-                <span>129.6</span>
+            {tableRows.map((row) => (
+              <div className="table-row" key={row.label} style={tableGridStyle}>
+                <strong>{row.label}</strong>
+                {tablePeriods.map((period) => {
+                  const value = row.points.find((point) => point.period === period)?.value;
+
+                  return (
+                    <span className={firstItem.flagged_periods.includes(period) ? "flagged-cell" : undefined} key={period}>
+                      {value === null || value === undefined ? "n/a" : value.toFixed(1)}
+                    </span>
+                  );
+                })}
               </div>
             ))}
           </div>
+
+          <SeriesChart flaggedPeriods={firstItem.flagged_periods} seriesSet={activeDetail.main_series} />
         </Panel>
 
         <Panel
           title="Active Draft"
-          eyebrow="Draft placeholder"
-          actions={<StatusBadge>Not kept</StatusBadge>}
           className="workbench-panel workbench-panel--right"
+          hideHeader
         >
           <div className="draft-context">
             <h3>{firstItem.indicator_name}</h3>
