@@ -27,7 +27,7 @@ export function App() {
         <article className="status-card">
           <span>Country</span>
           <strong>
-            {mockReviewSession.country.iso} · {mockReviewSession.country.name}
+            {mockReviewSession.country.iso_code} · {mockReviewSession.country.name}
           </strong>
         </article>
         <article className="status-card">
@@ -49,12 +49,12 @@ export function App() {
         </aside>
 
         <section className="preview-main">
-          <h2>{firstItem.indicator_label}</h2>
-          <p>{firstItem.validation_label}</p>
+          <h2>{firstItem.indicator_name}</h2>
+          <p>{firstItem.validation_name}</p>
           <dl>
             <div>
               <dt>Sector</dt>
-              <dd>{firstItem.sector_label}</dd>
+              <dd>{firstItem.sector_name}</dd>
             </div>
             <div>
               <dt>Flagged periods</dt>
