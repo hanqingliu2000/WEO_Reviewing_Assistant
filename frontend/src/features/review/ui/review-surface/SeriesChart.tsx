@@ -12,11 +12,13 @@ export function SeriesChart({ flaggedPeriods, seriesSet }: SeriesChartProps) {
   const flaggedPeriodSet = useMemo(() => new Set(flaggedPeriods), [flaggedPeriods]);
 
   useEffect(() => {
-    if (!chartRef.current) {
+    const chartElement = chartRef.current;
+
+    if (!chartElement) {
       return undefined;
     }
+    const element: HTMLDivElement = chartElement;
 
-    const chart = echarts.init(chartRef.current);
     const periods = seriesSet.current.points.map((point) => point.period);
     const series = [
       { name: "Current", data: seriesSet.current.points.map((point) => point.value), color: "#1f7a8c" },
@@ -25,8 +27,7 @@ export function SeriesChart({ flaggedPeriods, seriesSet }: SeriesChartProps) {
         ? [{ name: "Published", data: seriesSet.published.points.map((point) => point.value), color: "#b7791f" }]
         : []),
     ];
-
-    chart.setOption({
+    const options = {
       animation: false,
       color: series.map((item) => item.color),
       grid: { top: 32, right: 18, bottom: 40, left: 48 },
@@ -63,21 +64,37 @@ export function SeriesChart({ flaggedPeriods, seriesSet }: SeriesChartProps) {
                   .filter((point) => flaggedPeriodSet.has(point.period) && point.coord[1] !== null),
               }
             : undefined,
-      })),
-    });
+          })),
+    };
+    let chart: echarts.ECharts | undefined;
 
-    const resizeObserver = new ResizeObserver(() => chart.resize());
-    resizeObserver.observe(chartRef.current);
+    function ensureChart() {
+      if (!element.clientWidth || !element.clientHeight) {
+        return;
+      }
+
+      if (!chart) {
+        chart = echarts.init(element);
+        chart.setOption(options);
+      } else {
+        chart.resize();
+      }
+    }
+
+    const resizeObserver = new ResizeObserver(ensureChart);
+    resizeObserver.observe(element);
+    const frameId = window.requestAnimationFrame(ensureChart);
 
     return () => {
+      window.cancelAnimationFrame(frameId);
       resizeObserver.disconnect();
-      chart.dispose();
+      chart?.dispose();
     };
   }, [flaggedPeriodSet, seriesSet]);
 
   return (
     <div
-      className="min-h-0 flex-1 overflow-hidden rounded-md border border-[var(--color-border)] bg-white"
+      className="min-h-[280px] flex-1 overflow-hidden rounded-md border border-[var(--color-border)] bg-white"
       ref={chartRef}
       aria-label="Line chart"
     />
