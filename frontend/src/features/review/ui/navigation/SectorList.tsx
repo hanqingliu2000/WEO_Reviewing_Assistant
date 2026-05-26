@@ -1,4 +1,5 @@
 import type { NavigationSector } from "../../runtime/navigationTree";
+import { DisclosureArrow } from "./DisclosureArrow";
 import { ValidationList } from "./ValidationList";
 
 type SectorListProps = {
@@ -42,7 +43,7 @@ export function SectorList({
           <div className="relative grid gap-0.5" key={sector.sectorCode}>
             <button
               aria-expanded={isExpanded}
-              className={`grid min-h-9 w-full grid-cols-[22px_36px_minmax(0,1fr)] items-center gap-2 rounded-md border p-1.5 pl-2 text-left text-[var(--color-ink)] transition-colors hover:border-[var(--color-brand-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-secondary)] ${
+              className={`grid min-h-[34px] w-full grid-cols-[16px_28px_minmax(0,1fr)] items-center gap-1.5 rounded-md border px-2 py-1.5 text-left text-[var(--color-ink)] transition-colors hover:border-[var(--color-brand-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-secondary)] ${
                 isActive
                   ? "border-[rgb(0_76_151_/_20%)] bg-[var(--color-brand-bg)]"
                   : "border-transparent bg-[#eef3f8]"
@@ -52,13 +53,13 @@ export function SectorList({
               type="button"
             >
               <span
-                className="inline-grid h-[18px] w-[18px] place-items-center rounded-sm border border-[var(--color-border-strong)] bg-white text-xs leading-none text-[var(--color-muted)]"
+                className="inline-grid h-4 w-4 place-items-center text-[var(--color-brand-primary)]"
                 aria-hidden="true"
               >
-                {isExpanded ? "-" : "+"}
+                <DisclosureArrow expanded={isExpanded} />
               </span>
               <span className="text-[11px] font-extrabold text-[var(--color-brand-primary)]">{sector.sectorCode}</span>
-              <strong className="[overflow-wrap:anywhere] text-xs leading-[1.3] whitespace-normal">
+              <strong className="[overflow-wrap:anywhere] text-[13px] font-extrabold leading-[1.3] whitespace-normal">
                 {sector.sectorName.replace(`${sector.sectorCode} - `, "")}
               </strong>
             </button>

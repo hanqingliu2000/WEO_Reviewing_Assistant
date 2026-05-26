@@ -13,8 +13,20 @@ type ReviewWorkspaceProps = {
   reviewItemDetails: Record<string, ReviewItemDetail>;
 };
 
-const LEFT_PANEL_MIN_WIDTH = 240;
-const LEFT_PANEL_MAX_WIDTH = 640;
+const LEFT_PANEL_MIN_WIDTH = 280;
+const LEFT_PANEL_ABSOLUTE_MAX_WIDTH = 420;
+
+function getLeftPanelMaxWidth() {
+  if (typeof window === "undefined") {
+    return LEFT_PANEL_ABSOLUTE_MAX_WIDTH;
+  }
+
+  return Math.max(LEFT_PANEL_MIN_WIDTH, Math.min(LEFT_PANEL_ABSOLUTE_MAX_WIDTH, Math.floor(window.innerWidth / 3)));
+}
+
+function clampLeftPanelWidth(width: number) {
+  return Math.min(Math.max(width, LEFT_PANEL_MIN_WIDTH), getLeftPanelMaxWidth());
+}
 
 export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: ReviewWorkspaceProps) {
   const tableRef = useRef<HTMLDivElement>(null);
@@ -55,6 +67,19 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
     }
   }, [activeDetail]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      setLeftPanelWidth((currentWidth) => clampLeftPanelWidth(currentWidth));
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   if (!activeItem || !activeDetail) {
     return null;
   }
@@ -64,7 +89,7 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
       <SessionHeader session={session} />
 
       <div
-        className="grid min-h-0 flex-1 gap-4 overflow-hidden [grid-template-columns:var(--left-panel-width,340px)_6px_minmax(480px,1fr)_minmax(260px,340px)] min-[2100px]:[grid-template-columns:var(--left-panel-width,340px)_6px_minmax(720px,1fr)_minmax(320px,420px)] max-[1220px]:[grid-template-columns:var(--left-panel-width,340px)_6px_minmax(420px,1fr)_minmax(230px,275px)] max-[980px]:[grid-template-columns:1fr]"
+        className="grid min-h-0 flex-1 gap-2 overflow-hidden [grid-template-columns:var(--left-panel-width,340px)_3px_minmax(480px,1fr)_minmax(260px,340px)] min-[2100px]:[grid-template-columns:var(--left-panel-width,340px)_3px_minmax(720px,1fr)_minmax(320px,420px)] max-[1220px]:[grid-template-columns:var(--left-panel-width,340px)_3px_minmax(420px,1fr)_minmax(230px,275px)] max-[980px]:[grid-template-columns:1fr]"
         aria-label="WEO review workbench"
         style={{
           "--left-panel-width": `${leftPanelWidth}px`,
@@ -88,7 +113,7 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
 
         <div
           aria-label="Resize review navigation"
-          className="self-stretch touch-none cursor-col-resize rounded-sm hover:bg-[rgb(0_76_151_/_16%)] focus-visible:bg-[rgb(0_76_151_/_16%)] focus-visible:outline-none max-[980px]:hidden"
+          className="self-stretch touch-none cursor-col-resize rounded-sm bg-[var(--color-border)] opacity-60 transition-colors hover:bg-[var(--color-brand-primary)] hover:opacity-100 focus-visible:bg-[var(--color-brand-primary)] focus-visible:opacity-100 focus-visible:outline-none max-[980px]:hidden"
           onPointerDown={(event: PointerEvent<HTMLDivElement>) => {
             event.currentTarget.setPointerCapture(event.pointerId);
             event.preventDefault();
@@ -98,7 +123,7 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
               return;
             }
 
-            const nextWidth = Math.min(Math.max(event.clientX - 16, LEFT_PANEL_MIN_WIDTH), LEFT_PANEL_MAX_WIDTH);
+            const nextWidth = clampLeftPanelWidth(event.clientX - 16);
             setLeftPanelWidth(nextWidth);
           }}
           role="separator"

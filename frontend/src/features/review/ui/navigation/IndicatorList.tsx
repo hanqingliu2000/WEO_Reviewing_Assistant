@@ -19,7 +19,7 @@ export function IndicatorList({
 }: IndicatorListProps) {
   return (
     <div
-      className="relative ml-6 grid gap-0.5 pl-3 before:absolute before:top-0 before:bottom-2 before:left-0 before:w-px before:bg-[var(--color-border)]"
+      className="ml-6 grid gap-0.5"
       role="group"
     >
       {indicators.map((item) => {
@@ -27,37 +27,45 @@ export function IndicatorList({
         const isVisited = visitedItemIds?.has(item.review_item_id);
         const isKept = keptItemIds?.has(item.review_item_id);
         const isEdited = editedItemIds?.has(item.review_item_id);
-        const statusLabel = isEdited ? "Edited issue" : isKept ? "Kept issue" : undefined;
+        const raisesIssue = Boolean(isKept || isEdited);
+        const statusLabel = raisesIssue
+          ? "Visited, issue will be raised"
+          : isVisited
+            ? "Visited, no issue raised"
+            : "Not visited";
 
         return (
           <button
             aria-current={isActive ? "true" : undefined}
-            className={`grid min-h-[30px] w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-sm border bg-transparent p-1.5 pl-2 text-left transition-colors hover:border-[var(--color-brand-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-secondary)] ${
+            className={`grid min-h-[28px] w-full grid-cols-[minmax(0,1fr)_18px] items-center gap-1.5 rounded-sm border bg-transparent px-2 py-1 text-left transition-colors hover:border-[var(--color-brand-primary)] focus-visible:outline-none focus-visible:shadow-[inset_0_0_0_1px_var(--color-brand-secondary)] ${
               isActive
-                ? "border-[rgb(0_76_151_/_20%)] bg-[var(--color-brand-bg)] text-[var(--color-ink)]"
+                ? "border-[rgb(0_76_151_/_24%)] bg-[var(--color-brand-bg)] text-[var(--color-ink)] shadow-[inset_0_0_0_1px_rgb(0_76_151_/_12%)]"
                 : "border-transparent text-[var(--color-ink)]"
             } ${isVisited ? "text-[var(--color-subtle)]" : ""}`}
+            data-review-item-id={item.review_item_id}
             data-tree-row="true"
             key={item.review_item_id}
             onClick={() => onActivateReviewItem(item.review_item_id)}
             type="button"
           >
-            <strong className="[overflow-wrap:anywhere] text-xs leading-[1.3] whitespace-normal" title={item.indicator_name}>
+            <strong
+              className="[overflow-wrap:anywhere] text-[11px] font-medium leading-[1.3] whitespace-normal"
+              title={item.indicator_name}
+            >
               {item.indicator_id}
             </strong>
-            {statusLabel ? (
+            <span className="inline-grid h-[18px] w-[18px] place-items-center justify-self-end" title={statusLabel}>
               <span
                 aria-label={statusLabel}
-                className={`inline-grid h-[22px] w-[22px] place-items-center justify-self-end rounded-full text-[13px] font-extrabold ${
-                  isEdited
-                    ? "bg-[var(--color-info-bg)] text-[#075f82]"
-                    : "bg-[var(--color-brand-bg)] text-[var(--color-brand-primary)]"
+                className={`h-[9px] w-[9px] rounded-full ${
+                  raisesIssue
+                    ? "border border-[#b8860b] bg-[#f0c84b]"
+                    : isVisited
+                      ? "border border-[#248a4b] bg-[#35a862]"
+                      : "border border-[var(--color-muted)] bg-transparent"
                 }`}
-                title={statusLabel}
-              >
-                {isEdited ? "✎" : "✓"}
-              </span>
-            ) : null}
+              />
+            </span>
           </button>
         );
       })}

@@ -1,5 +1,5 @@
-import type { KeyboardEvent } from "react";
-import { useEffect, useMemo, useState } from "react";
+import type { KeyboardEvent, MutableRefObject } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReviewItem } from "../../types/review";
 import { buildNavigationTree } from "../../runtime/navigationTree";
 import { SectorList } from "./SectorList";
@@ -14,23 +14,104 @@ type ReviewNavigatorProps = {
   visitedItemIds?: ReadonlySet<string>;
 };
 
-function handleNavigationKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+function restoreScrollPosition(container: HTMLDivElement, scrollTop: number) {
+  container.scrollTop = scrollTop;
+  requestAnimationFrame(() => {
+    container.scrollTop = scrollTop;
+    requestAnimationFrame(() => {
+      container.scrollTop = scrollTop;
+    });
+  });
+}
+
+function focusTreeRow(row: HTMLButtonElement | undefined, container: HTMLDivElement) {
+  if (!row) {
+    return false;
+  }
+
+  const scrollTopBeforeFocus = container.scrollTop;
+  const rowRectBeforeFocus = row.getBoundingClientRect();
+  const containerRectBeforeFocus = container.getBoundingClientRect();
+  const isVisibleBeforeFocus =
+    rowRectBeforeFocus.top >= containerRectBeforeFocus.top && rowRectBeforeFocus.bottom <= containerRectBeforeFocus.bottom;
+
+  row.focus({ preventScroll: true });
+  container.scrollTop = scrollTopBeforeFocus;
+
+  if (isVisibleBeforeFocus) {
+    restoreScrollPosition(container, scrollTopBeforeFocus);
+    return true;
+  }
+
+  const rowRect = row.getBoundingClientRect();
+  const containerRect = container.getBoundingClientRect();
+
+  if (rowRect.top < containerRect.top) {
+    container.scrollTop -= containerRect.top - rowRect.top;
+  } else if (rowRect.bottom > containerRect.bottom) {
+    container.scrollTop += rowRect.bottom - containerRect.bottom;
+  }
+
+  return false;
+}
+
+function handleNavigationKeyDown(
+  event: KeyboardEvent<HTMLDivElement>,
+  onActiveReviewItemIdChange: (reviewItemId: string) => void,
+  pressedNavigationKeys: MutableRefObject<Set<string>>,
+) {
   if (event.key !== "ArrowDown" && event.key !== "ArrowUp") {
     return;
   }
 
   event.preventDefault();
-  const rows = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>("[data-tree-row='true']"));
-  const currentIndex = rows.findIndex((row) => row === document.activeElement);
+  event.stopPropagation();
 
-  if (currentIndex === -1) {
-    rows[0]?.focus();
+  if (event.repeat || pressedNavigationKeys.current.has(event.key)) {
+    return;
+  }
+  pressedNavigationKeys.current.add(event.key);
+
+  const rows = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>("[data-tree-row='true']"));
+  const activeElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  const activeRow = activeElement?.closest<HTMLButtonElement>("[data-tree-row='true']");
+  const currentIndex = rows.findIndex((row) => row === activeRow);
+  const direction = event.key === "ArrowDown" ? 1 : -1;
+  const indicatorRows = rows.filter((row) => row.dataset.reviewItemId);
+  const nextRow =
+    currentIndex === -1
+      ? direction === 1
+        ? indicatorRows[0]
+        : indicatorRows[indicatorRows.length - 1]
+      : direction === 1
+        ? rows.slice(currentIndex + 1).find((row) => row.dataset.reviewItemId) ?? indicatorRows[indicatorRows.length - 1]
+        : rows
+            .slice(0, currentIndex)
+            .reverse()
+            .find((row) => row.dataset.reviewItemId) ?? indicatorRows[0];
+
+  const shouldPreserveScroll = focusTreeRow(nextRow, event.currentTarget);
+
+  const nextReviewItemId = nextRow?.dataset.reviewItemId;
+  if (nextReviewItemId) {
+    onActiveReviewItemIdChange(nextReviewItemId);
+    if (shouldPreserveScroll) {
+      restoreScrollPosition(event.currentTarget, event.currentTarget.scrollTop);
+    }
+  }
+}
+
+function handleNavigationKeyUp(
+  event: KeyboardEvent<HTMLDivElement>,
+  pressedNavigationKeys: MutableRefObject<Set<string>>,
+) {
+  if (event.key !== "ArrowDown" && event.key !== "ArrowUp") {
     return;
   }
 
-  const direction = event.key === "ArrowDown" ? 1 : -1;
-  const nextIndex = Math.min(Math.max(currentIndex + direction, 0), rows.length - 1);
-  rows[nextIndex]?.focus();
+  event.preventDefault();
+  event.stopPropagation();
+  pressedNavigationKeys.current.delete(event.key);
 }
 
 export function ReviewNavigator({
@@ -50,6 +131,7 @@ export function ReviewNavigator({
   );
   const [expandedSectorIds, setExpandedSectorIds] = useState<Set<string>>(() => new Set(allSectorIds));
   const [expandedValidationIds, setExpandedValidationIds] = useState<Set<string>>(() => new Set(allValidationIds));
+  const pressedNavigationKeys = useRef(new Set<string>());
 
   useEffect(() => {
     setExpandedSectorIds(new Set(allSectorIds));
@@ -87,8 +169,15 @@ export function ReviewNavigator({
     <div className="flex min-h-0 flex-1 flex-col gap-0">
       <div
         aria-label="Review hierarchy"
-        className="grid min-h-0 flex-1 auto-rows-max content-start gap-0.5 overflow-auto px-2 pb-2"
-        onKeyDown={handleNavigationKeyDown}
+        className="grid min-h-0 flex-1 auto-rows-max content-start gap-0.5 overflow-auto px-2 pb-2 [overflow-anchor:none]"
+        onBlur={(event) => {
+          const nextFocusedElement = event.relatedTarget instanceof Node ? event.relatedTarget : null;
+          if (!nextFocusedElement || !event.currentTarget.contains(nextFocusedElement)) {
+            pressedNavigationKeys.current.clear();
+          }
+        }}
+        onKeyDownCapture={(event) => handleNavigationKeyDown(event, onActiveReviewItemIdChange, pressedNavigationKeys)}
+        onKeyUpCapture={(event) => handleNavigationKeyUp(event, pressedNavigationKeys)}
         role="tree"
       >
         <SectorList

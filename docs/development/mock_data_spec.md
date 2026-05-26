@@ -24,6 +24,8 @@ The mock data should cover:
 - conditional quarterly sectors,
 - `Critical`, `High`, and `Low` severity groups,
 - multiple validations,
+- multiple indicators under each validation,
+- at least one dense validation group with roughly 15-20 indicators to exercise navigation scrolling and keyboard traversal,
 - one indicator flagged by multiple validations,
 - annual periods such as `2025`,
 - quarterly periods such as `2025Q1`,

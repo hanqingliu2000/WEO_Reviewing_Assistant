@@ -1,4 +1,5 @@
 import type { NavigationValidation } from "../../runtime/navigationTree";
+import { DisclosureArrow } from "./DisclosureArrow";
 import { IndicatorList } from "./IndicatorList";
 
 type ValidationListProps = {
@@ -12,10 +13,6 @@ type ValidationListProps = {
   visitedItemIds?: ReadonlySet<string>;
 };
 
-function displayValidationName(validationName: string) {
-  return validationName.replace(/^(Critical|High|Low)\s*-\s*/i, "");
-}
-
 export function ValidationList({
   activeReviewItemId,
   editedItemIds,
@@ -28,7 +25,7 @@ export function ValidationList({
 }: ValidationListProps) {
   return (
     <div
-      className="relative ml-[15px] grid gap-0.5 pl-3 before:absolute before:top-0 before:bottom-2 before:left-0 before:w-px before:bg-[var(--color-border)]"
+      className="ml-3 grid gap-0.5"
       role="group"
     >
       {validations.map((validation) => {
@@ -38,19 +35,19 @@ export function ValidationList({
           <div className="relative grid gap-0.5" key={validation.nodeId}>
             <button
               aria-expanded={isExpanded}
-              className="grid min-h-[30px] w-full grid-cols-[22px_66px_minmax(0,1fr)] items-center gap-2 rounded-md border border-transparent bg-transparent p-1.5 pl-2 text-left text-[var(--color-ink)] transition-colors hover:border-[var(--color-brand-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-secondary)]"
+              className="grid min-h-[28px] w-full grid-cols-[16px_auto_minmax(0,1fr)] items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 text-left text-[var(--color-ink)] transition-colors hover:border-[var(--color-brand-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-secondary)]"
               data-tree-row="true"
               onClick={() => onToggleValidation(validation.nodeId)}
               type="button"
             >
               <span
-                className="inline-grid h-[18px] w-[18px] place-items-center rounded-sm border border-[var(--color-border-strong)] bg-white text-xs leading-none text-[var(--color-muted)]"
+                className="inline-grid h-4 w-4 place-items-center text-[var(--color-muted)]"
                 aria-hidden="true"
               >
-                {isExpanded ? "-" : "+"}
+                <DisclosureArrow expanded={isExpanded} />
               </span>
               <span
-                className={`inline-grid min-h-[22px] min-w-[58px] place-items-center overflow-hidden rounded-full text-ellipsis text-[11px] font-extrabold text-white ${
+                className={`inline-grid min-h-[18px] place-items-center overflow-hidden rounded-full px-1.5 text-[10px] font-extrabold leading-none text-white ${
                   validation.severity === "Critical"
                     ? "bg-[#e46a6d]"
                     : validation.severity === "High"
@@ -60,8 +57,8 @@ export function ValidationList({
               >
                 {validation.severity}
               </span>
-              <strong className="[overflow-wrap:anywhere] text-xs leading-[1.3] whitespace-normal">
-                {displayValidationName(validation.validationName)}
+              <strong className="[overflow-wrap:anywhere] text-[12px] font-semibold leading-[1.3] whitespace-normal">
+                {validation.validationId}
               </strong>
             </button>
 

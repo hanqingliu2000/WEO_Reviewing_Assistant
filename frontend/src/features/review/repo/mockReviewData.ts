@@ -78,8 +78,8 @@ type IndicatorConfig = {
 };
 
 const INDICATORS: Record<string, IndicatorConfig> = {
-  MCK_RGDP: {
-    indicator_id: "MCK_RGDP",
+  NGDP_R: {
+    indicator_id: "NGDP_R",
     indicator_name: "Real output volume index",
     frequency: "A",
     descriptor: "Synthetic real activity indicator, index level",
@@ -89,8 +89,8 @@ const INDICATORS: Record<string, IndicatorConfig> = {
     published_offset: -2.1,
     formula: "Aggregate real output / base-year aggregate real output * 100",
   },
-  MCK_NGDP: {
-    indicator_id: "MCK_NGDP",
+  NGDP: {
+    indicator_id: "NGDP",
     indicator_name: "Nominal output value",
     frequency: "A",
     descriptor: "Synthetic nominal aggregate, local units",
@@ -100,8 +100,8 @@ const INDICATORS: Record<string, IndicatorConfig> = {
     published_offset: -18,
     desk_series: "mock_nominal_output_value",
   },
-  MCK_CPI: {
-    indicator_id: "MCK_CPI",
+  PCPI_IX: {
+    indicator_id: "PCPI_IX",
     indicator_name: "Consumer price index",
     frequency: "A",
     descriptor: "Synthetic consumer price index",
@@ -111,8 +111,8 @@ const INDICATORS: Record<string, IndicatorConfig> = {
     published_offset: -1.2,
     desk_series: "mock_cpi_index",
   },
-  MCK_UNEMP: {
-    indicator_id: "MCK_UNEMP",
+  LUR: {
+    indicator_id: "LUR",
     indicator_name: "Labor slack rate",
     frequency: "A",
     descriptor: "Synthetic labor market rate",
@@ -121,8 +121,8 @@ const INDICATORS: Record<string, IndicatorConfig> = {
     previous_offset: 0.25,
     desk_series: "mock_labor_slack_rate",
   },
-  MCK_REV: {
-    indicator_id: "MCK_REV",
+  GGR_NGDP: {
+    indicator_id: "GGR_NGDP",
     indicator_name: "General revenue ratio",
     frequency: "A",
     descriptor: "Synthetic government revenue as a ratio",
@@ -131,8 +131,8 @@ const INDICATORS: Record<string, IndicatorConfig> = {
     previous_offset: -0.4,
     formula: "General revenue / nominal output * 100",
   },
-  MCK_EXP: {
-    indicator_id: "MCK_EXP",
+  GGX_NGDP: {
+    indicator_id: "GGX_NGDP",
     indicator_name: "General expenditure ratio",
     frequency: "A",
     descriptor: "Synthetic government expenditure as a ratio",
@@ -141,8 +141,8 @@ const INDICATORS: Record<string, IndicatorConfig> = {
     previous_offset: 0.5,
     desk_series: "mock_expenditure_ratio",
   },
-  MCK_EXPORTS: {
-    indicator_id: "MCK_EXPORTS",
+  BX_GDP: {
+    indicator_id: "BX_GDP",
     indicator_name: "External sales value",
     frequency: "A",
     descriptor: "Synthetic export-like flow",
@@ -152,8 +152,8 @@ const INDICATORS: Record<string, IndicatorConfig> = {
     published_offset: -3.4,
     desk_series: "mock_external_sales_value",
   },
-  MCK_IMPORTS: {
-    indicator_id: "MCK_IMPORTS",
+  BM_GDP: {
+    indicator_id: "BM_GDP",
     indicator_name: "External purchases value",
     frequency: "A",
     descriptor: "Synthetic import-like flow",
@@ -162,8 +162,8 @@ const INDICATORS: Record<string, IndicatorConfig> = {
     previous_offset: 3.5,
     desk_series: "mock_external_purchases_value",
   },
-  MCK_QGDP: {
-    indicator_id: "MCK_QGDP",
+  Q_NGDP_R_SA: {
+    indicator_id: "Q_NGDP_R_SA",
     indicator_name: "Quarterly real activity index",
     frequency: "Q",
     descriptor: "Synthetic quarterly real activity indicator",
@@ -172,8 +172,8 @@ const INDICATORS: Record<string, IndicatorConfig> = {
     previous_offset: -0.7,
     formula: "Quarterly activity / quarterly base activity * 100",
   },
-  MCK_QCPI: {
-    indicator_id: "MCK_QCPI",
+  Q_PCPI_IX: {
+    indicator_id: "Q_PCPI_IX",
     indicator_name: "Quarterly price index",
     frequency: "Q",
     descriptor: "Synthetic quarterly price index",
@@ -184,6 +184,57 @@ const INDICATORS: Record<string, IndicatorConfig> = {
     desk_series: "mock_quarterly_price_index",
   },
 };
+
+const EXTRA_INDICATOR_ROWS: Array<readonly [string, string, Frequency, number, number, number, number?]> = [
+  ["NGDP_RPCH", "Real GDP growth", "A", 3.2, 0.1, -0.6, -0.8],
+  ["NFI_R", "Real net factor income", "A", 11.8, 0.4, -0.9],
+  ["NID_NGDP", "National investment ratio", "A", 21.4, 0.2, -0.5],
+  ["NGS_NGDP", "Gross national savings ratio", "A", 24.7, 0.1, -0.7],
+  ["PCPIEPCH", "End-period inflation", "A", 4.1, 0.2, -0.5],
+  ["LP", "Population", "A", 32.5, 0.3, -0.1],
+  ["LE", "Employment", "A", 15.2, 0.2, -0.3],
+  ["GGXCNL_NGDP", "General government net lending", "A", -3.1, 0.1, -0.4],
+  ["GGXWDN_NGDP", "General government gross debt", "A", 61.5, 1.1, 1.6],
+  ["BCA_NGDPD", "Current account balance", "A", -2.6, 0.1, -0.4],
+  ["BF_NGDPD", "Financial account balance", "A", 1.8, 0.1, 0.5],
+  ["Q_NGDP_RPCH", "Quarterly real GDP growth", "Q", 1.1, 0.1, -0.3],
+  ["Q_NID_NGDP", "Quarterly investment ratio", "Q", 22.3, 0.1, -0.4],
+  ["Q_PCPIEPCH", "Quarterly end-period inflation", "Q", 1.4, 0.1, -0.2],
+  ["Q_LUR", "Quarterly unemployment rate", "Q", 7.1, -0.05, 0.2],
+  ["PPPSH", "World GDP share", "A", 0.42, 0.01, -0.03],
+  ["NGAP_NPGDP", "Output gap", "A", -0.8, 0.2, -0.5],
+  ["NFI_RPCH", "Real net factor income growth", "A", 2.4, 0.1, -0.8],
+  ["NCP_R", "Real private consumption", "A", 82, 1.7, -1.0],
+  ["NCG_R", "Real public consumption", "A", 35, 0.8, -0.7],
+  ["NFI_NGDP", "Net factor income ratio", "A", 3.2, 0.1, -0.4],
+  ["PCPI_PC_CP_A_PT", "Average CPI contribution", "A", 2.6, 0.2, -0.4],
+  ["GGXONLB_NGDP", "Structural balance", "A", -2.2, 0.1, -0.3],
+  ["GGXWDG_NGDP", "General government net debt", "A", 48.2, 0.9, 1.2],
+  ["BFD_NGDPD", "Direct investment balance", "A", 2.1, 0.1, -0.3],
+  ["BFO_NGDPD", "Other investment balance", "A", -1.4, 0.2, 0.5],
+  ["Q_NCP_R", "Quarterly real private consumption", "Q", 88, 0.6, -0.5],
+  ["Q_NCG_R", "Quarterly real public consumption", "Q", 38, 0.3, -0.3],
+  ["Q_PCPI_PC_CP_A_PT", "Quarterly CPI contribution", "Q", 0.7, 0.05, -0.1],
+];
+
+const EXTRA_INDICATORS: IndicatorConfig[] = EXTRA_INDICATOR_ROWS.map(
+  ([indicator_id, indicator_name, frequency, base, step, previous_offset, published_offset]) => ({
+    indicator_id,
+    indicator_name,
+    frequency,
+    descriptor: `Mock ${indicator_name.toLowerCase()} series`,
+    base,
+    step,
+    previous_offset,
+    published_offset,
+    desk_series: `mock_${indicator_id.toLowerCase()}`,
+  }),
+);
+
+Object.assign(
+  INDICATORS,
+  Object.fromEntries(EXTRA_INDICATORS.map((indicator) => [indicator.indicator_id, indicator])),
+);
 
 function periodsFor(frequency: Frequency): string[] {
   return frequency === "Q" ? QUARTERLY_PERIODS : ANNUAL_PERIODS;
@@ -246,7 +297,7 @@ export const mockIndicatorSeriesSets: Record<string, IndicatorSeriesSet> = Objec
   Object.values(INDICATORS).map((indicator) => [
     indicator.indicator_id,
     makeIndicatorSeriesSet(indicator, {
-      null_periods: indicator.indicator_id === "MCK_EXP" ? ["2022"] : [],
+      null_periods: indicator.indicator_id === "GGX_NGDP" ? ["2022"] : [],
     }),
   ]),
 );
@@ -313,6 +364,138 @@ function reviewItem(params: {
   };
 }
 
+const additionalReviewItemSeeds: Array<{
+  sector: { code: string; name: string };
+  severity: Severity;
+  validation_id: string;
+  validation_name: string;
+  indicator_ids: string[];
+  flagged_periods: string[];
+  has_published?: boolean;
+  has_related_indicators?: boolean;
+}> = [
+  {
+    sector: SECTORS.real,
+    severity: "Critical",
+    validation_id: "CRIT_REVISION_SPIKE",
+    validation_name: "Critical - Large revision in recent periods",
+    indicator_ids: [
+      "NGDP_RPCH",
+      "NFI_R",
+      "NID_NGDP",
+      "NGS_NGDP",
+      "PPPSH",
+      "NGAP_NPGDP",
+      "NFI_RPCH",
+      "NCP_R",
+      "NCG_R",
+      "NFI_NGDP",
+      "PCPI_IX",
+      "PCPIEPCH",
+      "LP",
+      "LE",
+      "LUR",
+      "GGR_NGDP",
+    ],
+    flagged_periods: ["2025", "2026"],
+  },
+  {
+    sector: SECTORS.real,
+    severity: "High",
+    validation_id: "HIGH_LEVEL_BREAK",
+    validation_name: "High - Level break against previous submission",
+    indicator_ids: ["NCP_R", "NCG_R", "NGAP_NPGDP"],
+    flagged_periods: ["2024"],
+  },
+  {
+    sector: SECTORS.nominal,
+    severity: "High",
+    validation_id: "HIGH_NOMINAL_REAL_GAP",
+    validation_name: "High - Nominal and real movement diverge",
+    indicator_ids: ["NGDP_R", "NGDP_RPCH", "PPPSH"],
+    flagged_periods: ["2026", "2027"],
+  },
+  {
+    sector: SECTORS.price,
+    severity: "Critical",
+    validation_id: "CRIT_PRICE_ACCELERATION",
+    validation_name: "Critical - Price path acceleration",
+    indicator_ids: ["PCPIEPCH", "PCPI_PC_CP_A_PT"],
+    flagged_periods: ["2024", "2025", "2026"],
+  },
+  {
+    sector: SECTORS.price,
+    severity: "Low",
+    validation_id: "LOW_LABOR_GAP",
+    validation_name: "Low - Labor rate differs from expected path",
+    indicator_ids: ["LP", "LE"],
+    flagged_periods: ["2027"],
+    has_published: false,
+    has_related_indicators: false,
+  },
+  {
+    sector: SECTORS.fiscal,
+    severity: "High",
+    validation_id: "HIGH_RATIO_SHIFT",
+    validation_name: "High - Fiscal ratio changed materially",
+    indicator_ids: ["GGX_NGDP", "GGXCNL_NGDP", "GGXWDN_NGDP"],
+    flagged_periods: ["2025", "2026"],
+  },
+  {
+    sector: SECTORS.fiscal,
+    severity: "Low",
+    validation_id: "LOW_SMOOTHING_CHECK",
+    validation_name: "Low - Smoothness check flagged out-year movement",
+    indicator_ids: ["GGXONLB_NGDP", "GGXWDG_NGDP", "GGXCNL_NGDP"],
+    flagged_periods: ["2028"],
+    has_published: false,
+  },
+  {
+    sector: SECTORS.trade,
+    severity: "High",
+    validation_id: "HIGH_FLOW_REVISION",
+    validation_name: "High - External flow revision exceeds threshold",
+    indicator_ids: ["BM_GDP", "BCA_NGDPD"],
+    flagged_periods: ["2024", "2025"],
+  },
+  {
+    sector: SECTORS.trade,
+    severity: "Critical",
+    validation_id: "CRIT_BALANCE_INCONSISTENCY",
+    validation_name: "Critical - Flow consistency check failed",
+    indicator_ids: ["BCA_NGDPD", "BF_NGDPD"],
+    flagged_periods: ["2025"],
+    has_published: false,
+  },
+  {
+    sector: SECTORS.bop,
+    severity: "Low",
+    validation_id: "LOW_METADATA_REVIEW",
+    validation_name: "Low - Metadata review recommended",
+    indicator_ids: ["BF_NGDPD", "BFD_NGDPD", "BFO_NGDPD"],
+    flagged_periods: ["2027"],
+  },
+  {
+    sector: SECTORS.qna,
+    severity: "High",
+    validation_id: "HIGH_Q_REVISION",
+    validation_name: "High - Quarterly revision concentrated in latest quarters",
+    indicator_ids: ["Q_NGDP_RPCH", "Q_NID_NGDP", "Q_NCP_R", "Q_NCG_R"],
+    flagged_periods: ["2025Q3", "2025Q4", "2026Q1"],
+    has_published: false,
+  },
+  {
+    sector: SECTORS.qprice,
+    severity: "Critical",
+    validation_id: "CRIT_Q_PRICE_JUMP",
+    validation_name: "Critical - Quarterly price index jump",
+    indicator_ids: ["Q_PCPIEPCH", "Q_LUR", "Q_PCPI_PC_CP_A_PT"],
+    flagged_periods: ["2025Q2", "2025Q3"],
+  },
+];
+
+let nextAdditionalReviewItemNumber = 13;
+
 export const mockReviewItems: ReviewItem[] = [
   reviewItem({
     id: "ri-001",
@@ -320,7 +503,7 @@ export const mockReviewItems: ReviewItem[] = [
     severity: "Critical",
     validation_id: "CRIT_REVISION_SPIKE",
     validation_name: "Critical - Large revision in recent periods",
-    indicator: INDICATORS.MCK_RGDP,
+    indicator: INDICATORS.NGDP_R,
     flagged_periods: ["2025", "2026"],
   }),
   reviewItem({
@@ -329,7 +512,7 @@ export const mockReviewItems: ReviewItem[] = [
     severity: "High",
     validation_id: "HIGH_LEVEL_BREAK",
     validation_name: "High - Level break against previous submission",
-    indicator: INDICATORS.MCK_RGDP,
+    indicator: INDICATORS.NGDP_R,
     flagged_periods: ["2024"],
   }),
   reviewItem({
@@ -338,7 +521,7 @@ export const mockReviewItems: ReviewItem[] = [
     severity: "High",
     validation_id: "HIGH_NOMINAL_REAL_GAP",
     validation_name: "High - Nominal and real movement diverge",
-    indicator: INDICATORS.MCK_NGDP,
+    indicator: INDICATORS.NGDP,
     flagged_periods: ["2026", "2027"],
   }),
   reviewItem({
@@ -347,7 +530,7 @@ export const mockReviewItems: ReviewItem[] = [
     severity: "Critical",
     validation_id: "CRIT_PRICE_ACCELERATION",
     validation_name: "Critical - Price path acceleration",
-    indicator: INDICATORS.MCK_CPI,
+    indicator: INDICATORS.PCPI_IX,
     flagged_periods: ["2024", "2025", "2026"],
   }),
   reviewItem({
@@ -356,7 +539,7 @@ export const mockReviewItems: ReviewItem[] = [
     severity: "Low",
     validation_id: "LOW_LABOR_GAP",
     validation_name: "Low - Labor rate differs from expected path",
-    indicator: INDICATORS.MCK_UNEMP,
+    indicator: INDICATORS.LUR,
     flagged_periods: ["2027"],
     has_published: false,
     has_related_indicators: false,
@@ -367,7 +550,7 @@ export const mockReviewItems: ReviewItem[] = [
     severity: "High",
     validation_id: "HIGH_RATIO_SHIFT",
     validation_name: "High - Fiscal ratio changed materially",
-    indicator: INDICATORS.MCK_REV,
+    indicator: INDICATORS.GGR_NGDP,
     flagged_periods: ["2025", "2026"],
   }),
   reviewItem({
@@ -376,7 +559,7 @@ export const mockReviewItems: ReviewItem[] = [
     severity: "Low",
     validation_id: "LOW_SMOOTHING_CHECK",
     validation_name: "Low - Smoothness check flagged out-year movement",
-    indicator: INDICATORS.MCK_EXP,
+    indicator: INDICATORS.GGX_NGDP,
     flagged_periods: ["2028"],
     has_published: false,
   }),
@@ -386,7 +569,7 @@ export const mockReviewItems: ReviewItem[] = [
     severity: "High",
     validation_id: "HIGH_FLOW_REVISION",
     validation_name: "High - External flow revision exceeds threshold",
-    indicator: INDICATORS.MCK_EXPORTS,
+    indicator: INDICATORS.BX_GDP,
     flagged_periods: ["2024", "2025"],
   }),
   reviewItem({
@@ -395,7 +578,7 @@ export const mockReviewItems: ReviewItem[] = [
     severity: "Critical",
     validation_id: "CRIT_BALANCE_INCONSISTENCY",
     validation_name: "Critical - Flow consistency check failed",
-    indicator: INDICATORS.MCK_IMPORTS,
+    indicator: INDICATORS.BM_GDP,
     flagged_periods: ["2025"],
     has_published: false,
   }),
@@ -405,7 +588,7 @@ export const mockReviewItems: ReviewItem[] = [
     severity: "Low",
     validation_id: "LOW_METADATA_REVIEW",
     validation_name: "Low - Metadata review recommended",
-    indicator: INDICATORS.MCK_EXPORTS,
+    indicator: INDICATORS.BX_GDP,
     flagged_periods: ["2027"],
   }),
   reviewItem({
@@ -414,7 +597,7 @@ export const mockReviewItems: ReviewItem[] = [
     severity: "High",
     validation_id: "HIGH_Q_REVISION",
     validation_name: "High - Quarterly revision concentrated in latest quarters",
-    indicator: INDICATORS.MCK_QGDP,
+    indicator: INDICATORS.Q_NGDP_R_SA,
     flagged_periods: ["2025Q3", "2025Q4", "2026Q1"],
     has_published: false,
   }),
@@ -424,9 +607,27 @@ export const mockReviewItems: ReviewItem[] = [
     severity: "Critical",
     validation_id: "CRIT_Q_PRICE_JUMP",
     validation_name: "Critical - Quarterly price index jump",
-    indicator: INDICATORS.MCK_QCPI,
+    indicator: INDICATORS.Q_PCPI_IX,
     flagged_periods: ["2025Q2", "2025Q3"],
   }),
+  ...additionalReviewItemSeeds.flatMap((seed) =>
+    seed.indicator_ids.map((indicatorId) => {
+      const reviewItemNumber = nextAdditionalReviewItemNumber;
+      nextAdditionalReviewItemNumber += 1;
+
+      return reviewItem({
+        id: `ri-${String(reviewItemNumber).padStart(3, "0")}`,
+        sector: seed.sector,
+        severity: seed.severity,
+        validation_id: seed.validation_id,
+        validation_name: seed.validation_name,
+        indicator: INDICATORS[indicatorId],
+        flagged_periods: seed.flagged_periods,
+        has_published: seed.has_published,
+        has_related_indicators: seed.has_related_indicators,
+      });
+    }),
+  ),
 ];
 
 export const mockReviewSession: ReviewSession = {
@@ -470,7 +671,7 @@ const issueReportEntries: MockIssueReportSourceEntry[] = [
   {
     issue_report_entry_id: "issue-history-001",
     validation_id: "CRIT_REVISION_SPIKE",
-    indicator_id: "MCK_RGDP",
+    indicator_id: "NGDP_R",
     period_range: "2023-2024",
     explanation:
       "Previous mock review noted a methodology update in the recent history. The explanation was accepted for that cycle, but reviewers asked that future out-year changes be documented separately.",
@@ -478,7 +679,7 @@ const issueReportEntries: MockIssueReportSourceEntry[] = [
   {
     issue_report_entry_id: "issue-history-002",
     validation_id: "CRIT_REVISION_SPIKE",
-    indicator_id: "MCK_RGDP",
+    indicator_id: "NGDP_R",
     period_range: "2025",
     explanation:
       "Mock confirmation stated that the new path reflected a revised source assumption rather than a data entry issue.",
@@ -486,7 +687,7 @@ const issueReportEntries: MockIssueReportSourceEntry[] = [
   {
     issue_report_entry_id: "issue-history-003",
     validation_id: "HIGH_RATIO_SHIFT",
-    indicator_id: "MCK_REV",
+    indicator_id: "GGR_NGDP",
     period_range: "2024-2026",
     explanation:
       "The ratio change was previously described as a classification update. This longer mock text is intentionally two to three lines in a compact layout so the UI can test clamp, expand, and popover behavior without relying on real review language.",
@@ -494,7 +695,7 @@ const issueReportEntries: MockIssueReportSourceEntry[] = [
   {
     issue_report_entry_id: "issue-history-004",
     validation_id: "CRIT_Q_PRICE_JUMP",
-    indicator_id: "MCK_QCPI",
+    indicator_id: "Q_PCPI_IX",
     period_range: "2025Q2-2025Q3",
     explanation:
       "Quarterly mock explanation: short-lived index movement was previously attributed to a synthetic timing shift.",
