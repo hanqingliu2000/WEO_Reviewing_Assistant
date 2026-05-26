@@ -4,9 +4,9 @@ This file is for collecting review comments, concerns, and proposed changes abou
 
 Use this file when you want to point out problems or uncertainties without editing TypeScript directly. After comments are collected, Codex can apply them consistently across:
 
-- `frontend/src/types/review.ts`
+- `frontend/src/features/review/types/review.ts`
 - `docs/development/mock_data_spec.md`
-- `frontend/src/data/mockReviewData.ts`
+- `frontend/src/features/review/repo/mockReviewData.ts`
 - future Flask API contract documents
 
 ## How To Use

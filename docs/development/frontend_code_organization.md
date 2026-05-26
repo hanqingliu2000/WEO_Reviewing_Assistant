@@ -2,112 +2,98 @@
 
 ## Purpose
 
-This document defines how frontend code should be organized once implementation starts.
+This document defines how frontend code is organized after the migration to a feature-first structure.
 
 Core principle:
 
 ```text
 Docs are organized by development slice.
-Code is organized by long-term product module.
+Code is organized by product feature, with shared primitives separated from review-domain code.
 ```
 
-Do not place production code under `frontend/slices/`. Use stable domain folders so future manual edits are easy to find.
+Do not place production code under `frontend/slices/`. Slice documents describe build order; source files should live under stable feature or shared folders so future manual edits are easy to find.
 
-## Recommended Tree
+## Current Tree
 
 ```text
 frontend/
   README.md
   package.json
+  vite.config.ts
   src/
-    app/
-      App.tsx
-      providers/
-      routes/
-    components/
-      layout/
-        AppShell.tsx
-        SessionHeader.tsx
+    main.tsx
+    features/
+      review/
+        repo/
+          mockReviewData.ts
+        runtime/
+          navigationTree.ts
+        types/
+          review.ts
+        ui/
+          ReviewApp.tsx
+          ReviewWorkspace.tsx
+          layout/
+            SessionHeader.tsx
+          navigation/
+            ReviewNavigator.tsx
+            SectorList.tsx
+            ValidationList.tsx
+            IndicatorList.tsx
+          review-surface/
+            SeriesChart.tsx
+    shared/
+      styles/
+        tokens.css
+        globals.css
+      ui/
         Panel.tsx
-      navigation/
-        ReviewNavigator.tsx
-        SectorList.tsx
-        SeverityFilter.tsx
-        ValidationList.tsx
-        IndicatorList.tsx
-      review-surface/
-        ReviewSurface.tsx
-        ActiveContextHeader.tsx
-        TimePeriodControl.tsx
-        LineChartPanel.tsx
-        CurrentPreviousPublishedTable.tsx
-        IssuesReportPanel.tsx
-        RelatedIndicatorsTable.tsx
-        MetadataAccordion.tsx
-        ChartOptionsMenu.tsx
-      evidence/
-        EvidenceToolbar.tsx
-        HighlightModeToggle.tsx
-        EvidenceRangeControl.tsx
-        MockEvidencePreview.tsx
-      draft/
-        ActiveDraftPanel.tsx
-        DraftEditor.tsx
-        DraftStatusBadge.tsx
-      completion/
-        CompleteReviewControl.tsx
-        OverallEditScreen.tsx
-        SectorDraftGroup.tsx
-        IndicatorMergedDraftBlock.tsx
-        OutputExportPanel.tsx
-      shared/
         StatusBadge.tsx
         CountPill.tsx
-        IconButtonWithTooltip.tsx
-        EmptyState.tsx
-        ErrorBanner.tsx
-    state/
-      reviewSessionStore.ts
-      selectors.ts
-    services/
-      reviewWorkbenchServices.ts
-      mockReviewWorkbenchServices.ts
-    data/
-      mockReviewData.ts
-    types/
-      review.ts
-    styles/
-      tokens.css
-      globals.css
 ```
 
-This tree assumes React/Vite, but the domain organization should remain stable even if the framework changes later.
+## Folder Responsibilities
+
+| Folder | Owns | Notes |
+| --- | --- | --- |
+| `src/main.tsx` | React root and global style imports | Keep this thin. It should mount `ReviewApp` and import shared CSS only. |
+| `features/review/ui/` | Review workbench screens and feature-specific UI | Current top-level shell is `ReviewWorkspace.tsx`. |
+| `features/review/ui/layout/` | Review-specific layout pieces | `SessionHeader` lives here because it depends on review session metadata. |
+| `features/review/ui/navigation/` | Sector / validation / indicator navigation | Includes collapse/expand behavior and keyboard traversal. |
+| `features/review/ui/review-surface/` | Active review content visualization | Current chart implementation is `SeriesChart.tsx`; future table and issues panels should live here. |
+| `features/review/runtime/` | Pure feature helpers and derived structures | `navigationTree.ts` builds the tree model from `ReviewItem[]`. Keep DOM-free logic here. |
+| `features/review/repo/` | Mock data and future review data adapters | Current mock dataset lives in `mockReviewData.ts`. Future service adapters can be added here or under a sibling `services/` folder. |
+| `features/review/types/` | Review-domain TypeScript types | `review.ts` is the canonical review feature contract. |
+| `shared/ui/` | Reusable UI primitives | Components here must not import review-domain data or review feature files. |
+| `shared/styles/` | Global CSS and design tokens | Tailwind is imported from `globals.css`; tokens stay in `tokens.css`. |
 
 ## Slice To Folder Mapping
 
 | Slice | Primary folders | Notes |
 | --- | --- | --- |
-| `01_ui_shell` | `app/`, `components/layout/`, `components/shared/`, `styles/` | Layout, header, and baseline visual language. |
-| `02_left_navigation` | `components/navigation/`, `components/shared/`, `state/` | Sector, severity, validation, indicator navigation. |
-| `03_center_review_surface` | `components/review-surface/`, `components/shared/`, `data/` | Chart, tables, issues history, metadata. |
-| `04_review_state_flow` | `state/`, `app/providers/`, `navigation/`, `review-surface/` | Active pair, visited state, progress. |
-| `05_active_draft_panel` | `components/draft/`, `state/`, `services/` | Mock draft generation and keep/edit flow. |
-| `06_complete_overall_edit` | `components/completion/`, `state/`, `services/`, `types/` | Complete gate, no-issue completion, final grouping. |
-| `07_evidence_highlighting` | `components/evidence/`, `review-surface/`, `state/` | Evidence toggles and highlight state. |
-| `08_integration_readiness` | `services/`, `types/`, `state/`, `data/` | Service boundary for later Flask/API integration. |
+| `01_ui_shell` | `features/review/ui/`, `features/review/ui/layout/`, `shared/ui/`, `shared/styles/` | Layout, header, panel primitives, and baseline visual language. |
+| `02_left_navigation` | `features/review/ui/navigation/`, `features/review/runtime/`, `shared/ui/` | Sector, validation, indicator hierarchy and keyboard traversal. |
+| `03_center_review_surface` | `features/review/ui/review-surface/`, `features/review/repo/`, `features/review/types/`, `shared/ui/` | Chart, tables, issues history, related indicators, metadata. |
+| `04_review_state_flow` | `features/review/ui/`, `features/review/runtime/`, future `features/review/state/` | Active pair, visited state, progress, and browser persistence. |
+| `05_active_draft_panel` | future `features/review/ui/draft/`, future `features/review/state/`, future `features/review/repo/` | Mock draft generation and keep/edit flow. |
+| `06_complete_overall_edit` | future `features/review/ui/completion/`, `features/review/types/`, future `features/review/state/` | Complete gate, no-issue completion, final grouping. |
+| `07_evidence_highlighting` | future `features/review/ui/evidence/`, `features/review/ui/review-surface/`, future `features/review/state/` | Evidence toggles and highlight state. |
+| `08_integration_readiness` | `features/review/repo/`, `features/review/types/`, future `features/review/services/` | Service boundary for later Flask/API integration. |
 
 ## Naming Rules
 
-- Components use PascalCase: `ReviewNavigator`, `ReviewSurface`, `ActiveDraftPanel`.
+- Feature components use PascalCase: `ReviewWorkspace`, `ReviewNavigator`, `SeriesChart`.
 - Component filenames match component names.
-- Shared types stay in `src/types/review.ts`.
+- Review-domain types stay in `src/features/review/types/review.ts`.
+- Mock review data stays in `src/features/review/repo/mockReviewData.ts`.
+- Shared UI primitives stay in `src/shared/ui/` and should not import from `features/review`.
 - Session state should use stable names: `unvisited`, `visited`, `active`, `kept`, `edited`, `kept-or-edited`.
 - Draft states should use: `empty`, `generating`, `draft`, `kept`, `edited`, `error`.
 - Do not introduce persistent `skip` state.
 
 ## Service Boundary
 
-Components should call service functions instead of importing backend details directly.
+Components should call review data/service functions instead of importing backend details directly.
 
 Initial service names:
 
@@ -119,17 +105,23 @@ Initial service names:
 - `completeReview`
 - `exportEvidence`
 
-Current implementation should use mock services. Future Flask integration should replace the service adapter without forcing component rewrites.
+Current implementation uses mock data from `features/review/repo/mockReviewData.ts`. Future Flask integration should replace the repo/service adapter without forcing UI component rewrites.
 
 ## Manual Editing Rules
 
-When changing a feature:
+When changing a review feature:
 
-1. Start with the domain folder.
-2. Read the module README if available.
+1. Start in `frontend/src/features/review/`.
+2. Read the closest UI/runtime/types file before editing.
 3. Check `frontend_developer_brief.md`.
 4. Use `reference/frontend_interaction_spec.md` only when more detail is needed.
-5. Keep backend, AI, file paths, and API keys out of components.
+5. Keep backend, AI, file paths, and API keys out of UI components.
+
+When changing shared visual primitives:
+
+1. Start in `frontend/src/shared/ui/` or `frontend/src/shared/styles/`.
+2. Confirm the change is truly shared and not review-specific.
+3. Avoid importing feature-domain types into shared files.
 
 ## Current Out Of Scope
 

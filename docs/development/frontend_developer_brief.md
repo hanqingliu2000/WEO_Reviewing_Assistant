@@ -165,18 +165,16 @@ Code should be organized by long-term product module, not by slice.
 Key folders:
 
 ```text
-frontend/src/components/layout
-frontend/src/components/navigation
-frontend/src/components/review-surface
-frontend/src/components/evidence
-frontend/src/components/draft
-frontend/src/components/completion
-frontend/src/components/shared
-frontend/src/state
-frontend/src/services
-frontend/src/data
-frontend/src/types
-frontend/src/styles
+frontend/src/main.tsx
+frontend/src/features/review/repo
+frontend/src/features/review/runtime
+frontend/src/features/review/types
+frontend/src/features/review/ui
+frontend/src/features/review/ui/layout
+frontend/src/features/review/ui/navigation
+frontend/src/features/review/ui/review-surface
+frontend/src/shared/ui
+frontend/src/shared/styles
 ```
 
 See [frontend_code_organization.md](frontend_code_organization.md).

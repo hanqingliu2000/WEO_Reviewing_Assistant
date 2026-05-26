@@ -44,8 +44,8 @@ The mock data should cover:
 
 ## Current Mock Files
 
-- `frontend/src/types/review.ts`
-- `frontend/src/data/mockReviewData.ts`
+- `frontend/src/features/review/types/review.ts`
+- `frontend/src/features/review/repo/mockReviewData.ts`
 
 The current mock dataset includes:
 
