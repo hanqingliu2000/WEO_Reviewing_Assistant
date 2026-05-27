@@ -27,6 +27,9 @@ Use browser/window width to adapt. The three-column layout should remain usable 
 - The first screen is the workbench.
 - Keep the left and right panels compact.
 - Give the center review surface the most space.
+- Left and right panels may be user-resized within modest bounds.
+- The left panel defaults to its configured minimum width.
+- Neither side panel should exceed one third of the viewport width on desktop layouts.
 - Use horizontal scrolling for wide time-period tables.
 - On ultrawide screens, increase useful content density rather than simply scaling fonts.
 - Avoid nested cards.
@@ -63,9 +66,17 @@ Rules:
 - Use red, orange, and yellow only for issue, warning, or flag semantics.
 - Do not rely on color alone; pair important states with icons, badges, labels, or weight.
 
-## Logo Placeholder
+## Header Identity
 
-IMF/WEO logo or official identity assets should remain placeholders in the first version.
+Official identity assets are not required in the first version. The top-left identity is a mock, switchable, full-width brand block.
+
+Rules:
+
+- The displayed brand block includes `IMF / WEO` or `IMF / MCD REO` plus `Reviewing Assistant`.
+- WEO uses the primary brand blue.
+- MCD REO uses a gold brand block.
+- The brand selector dropdown options must match the displayed block width, content, and style.
+- Do not use a separate square logo next to the title in the current shell.
 
 ## Table Behavior
 
@@ -78,18 +89,19 @@ IMF/WEO logo or official identity assets should remain placeholders in the first
 ## Chart Behavior
 
 - Show current and previous series by default.
-- Published series is optional and should live in an options menu.
+- Published series is optional in the data. When present, it can be shown directly with current and previous; no chart options menu is required for the current slice.
 - Flagged periods and flagged points should be visible.
 - Use an x-axis range/data zoom control.
-- Auto-scale y-axis to the visible range with modest padding.
+- Auto-scale y-axis to the visible range. Extra y-axis padding refinement is not required for the current slice.
 - Support multiple non-contiguous highlight intervals.
 
 ## Settings
 
 Place display preferences in a compact settings control:
 
-- font scale,
+- font scale with default plus up to four larger steps,
 - density,
 - optional chart/table display toggles.
 
 Settings should not occupy primary review space.
+Increasing font scale must not expand the outer workbench beyond the viewport; panels should preserve their bounds and use internal scrolling, wrapping, or truncation as needed.

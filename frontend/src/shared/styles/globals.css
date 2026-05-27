@@ -45,3 +45,44 @@ h3 {
   font-family: var(--font-heading);
   letter-spacing: 0;
 }
+
+.review-workspace {
+  --font-step: 0px;
+  --row-extra: 0px;
+}
+
+.review-workspace :where(.text-xs, [class*="text-[10px]"], [class*="text-[11px]"], [class*="text-[12px]"]) {
+  font-size: calc(11px + var(--font-step)) !important;
+}
+
+.review-workspace :where(.text-sm, [class*="text-[13px]"], [class*="text-[14px]"]) {
+  font-size: calc(13px + var(--font-step)) !important;
+}
+
+.review-workspace :where([class*="text-[15px]"], [class*="text-[16px]"], [class*="text-[17px]"]) {
+  font-size: calc(15px + var(--font-step)) !important;
+}
+
+.review-workspace :where(.text-xl) {
+  font-size: calc(20px + var(--font-step)) !important;
+}
+
+.review-workspace :where(button, select) {
+  min-height: calc(30px + var(--row-extra));
+}
+
+.review-workspace :where([data-tree-row="true"]) {
+  min-height: calc(30px + var(--row-extra)) !important;
+}
+
+.review-workspace :where([aria-label="Current previous published data table"] [class*="min-h-5"]) {
+  min-height: calc(20px + var(--row-extra)) !important;
+}
+
+.review-workspace :where([aria-label="Related indicators table"] [class*="min-h-6"]) {
+  min-height: calc(24px + var(--row-extra)) !important;
+}
+
+.review-workspace :where(.truncate, [class*="text-ellipsis"]) {
+  min-width: 0;
+}

@@ -25,10 +25,10 @@ Use this checklist after each frontend implementation slice. It is a manual acce
 
 ## Navigation
 
-- Hierarchy is `sector -> severity -> validation -> indicator`.
+- Hierarchy is `sector -> validation -> indicator`.
 - Sector list is fixed.
 - Quarterly sectors appear only when the session has quarterly data.
-- Severity filters only the validation list.
+- Severity is displayed as validation metadata and does not need to be a separate hierarchy level.
 - Indicator is single-select.
 - Indicator list only shows items with flags for the active sector and validation.
 - Keyboard traversal can move from first flagged pair to last flagged pair.
@@ -37,24 +37,23 @@ Use this checklist after each frontend implementation slice. It is a manual acce
 ## State
 
 - Pair becomes visited only after the review surface loads successfully.
-- Active, visited, kept, and edited states are visually distinct.
-- Kept and edited markers are distinguishable.
+- Active, visited, and raised-issue states are visually distinct.
+- Kept and edited do not need separate navigation markers; both can appear as the same raised-issue state.
 - Visited/kept/edited state can be restored after browser reload in the same mock session.
 - No persistent skip state exists.
 
 ## Center Review Surface
 
-- Active context is visible.
-- Flagged period and flagged data point count are visible.
-- Validation explanation is visible.
-- Recommended action is visible.
+- The center surface starts with the current/previous/published-when-present data table.
+- Indicator code/name and desk series are visible above the line chart.
+- Formula is visible inside the chart container.
 - Line chart renders current and previous series.
-- Published series is optional and hidden behind an options menu.
+- Published series is optional in the data and displays directly when present.
 - Current/previous/published table renders when data exists.
 - Tables default-scroll to the newest/rightmost period.
-- Issues report panel appears between chart and related indicators.
-- Issues report filters by validation + indicator.
-- Long issues report text is controlled with clamp, expand, or popover behavior.
+- Desk explanation appears in the right panel above the draft.
+- Desk explanation filters by validation + indicator.
+- Long desk explanation text is controlled with clamp, expand, or popover behavior.
 - Related indicators depend only on indicator.
 - Related indicators are not affected by sector, severity, or validation.
 - Related indicators empty state is handled.
@@ -64,7 +63,7 @@ Use this checklist after each frontend implementation slice. It is a manual acce
 - Flagged points are visible.
 - Flagged periods are visible.
 - x-axis range/data zoom works.
-- y-axis auto-scales to visible data with padding.
+- y-axis auto-scales to visible data. Additional padding refinement is deferred.
 - Multiple non-contiguous chart highlight intervals can coexist.
 - Left-drag add and right-drag remove are implemented if feasible.
 - If right-drag is not feasible, equivalent toolbar modes exist.

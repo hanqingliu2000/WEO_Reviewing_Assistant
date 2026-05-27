@@ -12,12 +12,13 @@ Build hierarchical sector, validation, and indicator navigation using mock `Revi
 - nested indicator list under each validation,
 - user-resizable left panel width,
 - configurable minimum and maximum bounds for user-resized left panel width,
+- default left panel width equal to the configured minimum width,
 - active state,
 - hover state,
 - collapsible/expandable sector rows,
 - collapsible/expandable validation/diagnostic rows,
 - sticky bottom controls for `Collapse all` and `Expand all`,
-- visited/kept/edited visual placeholders,
+- visited/raised-issue visual placeholders,
 - keyboard traversal with arrow keys.
 
 ## Exclude
@@ -35,13 +36,15 @@ Build hierarchical sector, validation, and indicator navigation using mock `Revi
 - Indicator rows should display indicator code, such as `NGDP_R`, instead of long indicator display names.
 - Indicator active/focus treatment should stay inside the row bounds and must not overlap adjacent rows or status circles.
 - Visited rows are shown with quieter gray text.
-- Indicator visit/raise state is marked at the far right of every indicator row with a small status circle: unvisited is hollow, visited without raised issue is solid green, and visited with a kept/edited raised issue is solid yellow.
+- Indicator visit/raise state is marked at the far right of every indicator row with a small status circle: unvisited is hollow, visited without raised issue is solid green, and visited with a kept-or-edited raised issue is solid yellow.
+- The navigation does not need to visually distinguish kept from edited; both are represented as the same raised-issue state in this slice.
 - The right-side status circle uses a fixed-width column so wrapped indicator text never overlaps it as the left panel is resized.
 - Rows wrap text when the left panel is too narrow instead of truncating with ellipsis.
 - Sector and validation/diagnostic rows use visible hierarchy formatting such as modest indentation, font size/weight, and modern single-line SVG chevrons.
 - Row content should stay vertically centered even when labels wrap.
 - Severity labels should size to their text with compact horizontal padding instead of sharing a fixed width.
 - The left panel resize maximum should stay modest and must not exceed one third of the viewport width on desktop layouts.
+- The left panel should load at its minimum width by default, while still allowing user expansion.
 - The resize handle between the left navigation and center surface should be visually narrow so it does not waste horizontal workspace.
 - `Collapse all` is disabled when all sector and validation/diagnostic rows are collapsed.
 - `Expand all` is disabled when all sector and validation/diagnostic rows are expanded.
@@ -57,6 +60,7 @@ Build hierarchical sector, validation, and indicator navigation using mock `Revi
 
 ## Known Follow-Up
 
+- Collapse/expand all behavior is accepted for the current slice.
 - Edge keyboard traversal behaves correctly after scroll locking. Safari still shows residual navigation-panel scrolling in some local testing; keep this as a browser-specific follow-up rather than blocking the current slice.
 
 ## Acceptance
@@ -64,7 +68,7 @@ Build hierarchical sector, validation, and indicator navigation using mock `Revi
 - User can activate a mock review item.
 - User can manually resize the left panel width.
 - Quarterly sectors appear only for quarterly session.
-- Kept and edited markers are visually distinct.
+- Kept and edited are both represented by the raised-issue status marker.
 - Navigation can emit `activeReviewItemId`.
 - Navigation does not mark a pair visited by itself.
 - User can move through visible sector, validation, and indicator rows with the keyboard Down Arrow.

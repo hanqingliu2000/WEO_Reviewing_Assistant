@@ -12,7 +12,7 @@ The UI should be a professional, dense, calm data review tool. It should not fee
 Left Review Navigator | Center Review Surface | Right Active Draft Panel
 ```
 
-The right panel shows only the current active pair draft. Full final editing happens in `OverallEditScreen`.
+The right panel shows only the current active pair's desk explanation and draft. Full final editing happens in `OverallEditScreen`.
 
 ## Layout Components
 
@@ -47,14 +47,20 @@ Acceptance:
 
 Owns:
 
-- country/session display,
-- status placeholder,
-- reviewer context.
+- switchable report identity brand block,
+- searchable country selector,
+- decimal-place controls,
+- font-size controls.
 
 Rules:
 
-- sector changes do not affect the header status placeholder,
-- placeholder is acceptable for the first version.
+- report identity supports WEO and MCD REO mock brand blocks,
+- report identity dropdown options match the displayed brand block width, content, and style,
+- country search filters by country code or country name,
+- current country switching is UI-only in the mock phase,
+- header does not show reviewer name or submission timestamp,
+- font-size controls support the default size plus up to four larger steps,
+- increased font size should preserve outer panel bounds and rely on internal scrolling/wrapping/truncation.
 
 ## Navigation Components
 
@@ -66,7 +72,7 @@ Owns:
 - severity filter,
 - validation list,
 - indicator list,
-- visited/kept/edited progress display,
+- visited/raised-issue progress display,
 - keyboard traversal.
 
 Inputs:
@@ -88,10 +94,10 @@ Events:
 
 Acceptance:
 
-- hierarchy is `sector -> severity -> validation -> indicator`,
-- severity filters only validation list,
+- hierarchy is `sector -> validation -> indicator`,
+- severity is displayed as validation metadata and does not need to be a separate hierarchy level,
 - indicator is single-select,
-- active/visited/kept/edited states are visible,
+- active/visited/raised-issue states are visible,
 - next-unvisited action exists.
 
 ### `SectorList`
@@ -139,7 +145,7 @@ Rules:
 
 - single-select only,
 - visited state uses subtle background,
-- kept and edited show distinct markers before indicator name.
+- kept and edited both show as the same raised-issue marker at the far right of the indicator row.
 
 ## Review Surface Components
 
@@ -149,39 +155,33 @@ Owns:
 
 - active review layout,
 - load success event that marks a pair visited,
-- chart/table/issues/metadata composition.
+- center table/chart/related-indicators composition.
 
 Inputs:
 
 - active `ReviewItem`,
 - `ReviewItemDetail`,
-- display range,
+- decimal-place display setting,
 - evidence state.
 
 Events:
 
 - review item loaded,
-- display range changed,
 - highlight changed,
 - evidence option changed.
 
-### `ActiveContextHeader`
+### `ChartTitleRow`
 
 Owns:
 
-- country, sector, validation, indicator summary,
-- flagged period/count chips.
-
-### `TimePeriodControl`
-
-Owns:
-
-- display range for chart and tables.
+- indicator code,
+- indicator name,
+- desk series.
 
 Rules:
 
-- display range is not the same as evidence range,
-- changing display range does not delete saved highlights.
+- indicator code and name appear above the line chart,
+- desk series aligns to the right of the same row.
 
 ### `LineChartPanel`
 
@@ -192,13 +192,16 @@ Owns:
 - flagged markers,
 - flagged period shading,
 - user highlights,
-- x-axis range/data zoom,
+- x-axis range/data zoom through the explicit chart slider,
 - y-axis auto-scaling.
 
 Rules:
 
 - current and previous show by default,
-- published is available in options menu when present,
+- published displays directly when present,
+- additional y-axis range-padding refinement can wait for a later chart pass,
+- formula is displayed inside the chart container above the plot,
+- ordinary mouse-wheel or vertical trackpad scrolling over the chart does not zoom the chart,
 - multiple non-contiguous highlight intervals can coexist.
 
 ### `CurrentPreviousPublishedTable`
@@ -210,10 +213,11 @@ Owns:
 Rules:
 
 - default horizontal scroll starts at the newest/rightmost period,
+- horizontal scrollbars do not overlap table content,
 - missing published is handled cleanly,
 - cell/row/column highlights are supported.
 
-### `IssuesReportPanel`
+### `DeskExplanationPanel`
 
 Owns:
 
@@ -221,7 +225,7 @@ Owns:
 
 Position:
 
-- below the line chart and above related indicators.
+- in the right panel above the draft box.
 
 Rules:
 
@@ -241,6 +245,7 @@ Rules:
 - depends only on indicator,
 - not filtered by sector, severity, or validation,
 - updated/added display is a legend, not a filter.
+- shows a compact empty state when no related indicators exist.
 
 ### `MetadataAccordion`
 
@@ -251,6 +256,10 @@ Owns:
 - desk series,
 - source metadata,
 - optional technical details.
+
+Status:
+
+- Deferred. Current center surface shows formula in the chart and desk series in the chart title row instead of using a metadata accordion.
 
 ## Evidence Components
 
@@ -287,10 +296,11 @@ Use toolbar modes if right-drag is not feasible.
 Owns:
 
 - current active pair draft only,
+- desk explanation above draft,
 - mock draft generation,
 - keep,
 - edit,
-- regenerate,
+- skip,
 - error state.
 
 Rules:
@@ -298,6 +308,7 @@ Rules:
 - draft does not enter final output by default,
 - `Keep` makes it `kept`,
 - editing makes it `edited`,
+- `Skip` leaves it unkept/unedited,
 - no persistent skip state,
 - no evidence media is shown here.
 
@@ -306,8 +317,7 @@ Rules:
 Owns:
 
 - editable text area,
-- original text reference,
-- restore original action.
+- original text reference.
 
 ## Completion Components
 

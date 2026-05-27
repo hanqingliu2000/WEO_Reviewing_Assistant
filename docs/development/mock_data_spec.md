@@ -166,7 +166,7 @@ Optional fields:
 Notes:
 
 - Every main indicator should have current and previous series.
-- Published is optional and should be exposed later as an options-menu display choice.
+- Published is optional. When present in mock data, the frontend may display it directly with current and previous series; no options menu is required for the current center-surface slice.
 
 ### `RelatedIndicatorSeries`
 

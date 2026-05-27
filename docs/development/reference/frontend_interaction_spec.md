@@ -48,7 +48,7 @@ Reviewer is responsible for:
 | `kept` | User keeps AI original text | Keep action |
 | `edited` | User edits draft text | text edit |
 
-`kept` and `edited` both mean the item will be raised, but they must remain distinguishable.
+`kept` and `edited` both mean the item will be raised. The data model keeps them separate, but the left navigation can display both as the same raised-issue marker.
 
 ## Draft State
 
@@ -83,14 +83,14 @@ Persistence should be scoped by country/submission/session id.
 Hierarchy:
 
 ```text
-sector -> severity -> validation -> indicator
+sector -> validation -> indicator
 ```
 
 Rules:
 
 - Sector is a fixed list.
 - Quarterly sectors appear only when the current session has quarterly data.
-- Severity comes from validation prefix and filters only validation list.
+- Severity comes from validation metadata and is displayed as a marker on validation rows; it is not a required hierarchy level.
 - Indicator list shows only flagged indicators for the active sector and validation.
 - Indicator is single-select.
 - Related indicators depend only on selected indicator.
@@ -107,32 +107,28 @@ Keyboard behavior:
 
 | Selection | Affects | Does not affect |
 | --- | --- | --- |
-| Sector | validation list, indicator list, active context | submission status, related indicator definition |
+| Sector | validation list, indicator list | submission status, related indicator definition |
 | Severity marker/filter, if present | validation list display only | chart, tables, related indicators, status |
 | Validation | indicator list, flagged periods, explanation, draft context | related indicators |
 | Indicator | chart, tables, metadata, formula, related indicators | validation list |
-| Time period | displayed chart/table range | flagged point definition |
+| Chart slider | displayed chart viewport | table range, flagged point definition |
 | Evidence range | saved highlight/export range | display period |
 
 ## Center Review Surface
 
 For the active pair, show:
 
-- active context,
-- flagged period and count,
-- validation explanation,
-- recommended action,
-- current/previous/optional published table,
+- current/previous/published-when-present table,
+- indicator code/name and desk series title row,
 - line chart,
-- issues report history,
-- related indicators,
-- formula / desk series / metadata.
+- formula inside the chart container,
+- related indicators.
 
-The current/previous/optional published table appears above the line chart. Time period controls change display range only. Evidence range and highlights are separate.
+The current/previous/published-when-present table appears above the line chart. Decimal-place controls live in the top header and apply to center tables. The chart x-axis slider changes only the chart viewport. Evidence range and highlights are separate. If no related indicators exist, the related indicators area shows a compact empty state.
 
-## Issues Report History
+## Desk Explanation
 
-`IssuesReportPanel` sits between the line chart and related indicators.
+Desk explanation sits in the right panel above the draft.
 
 It is filtered by:
 
@@ -169,7 +165,7 @@ User actions:
 
 - `Keep`: status becomes `kept`.
 - Edit text: status becomes `edited`.
-- `Regenerate`: refreshes draft, with protection for edited text.
+- `Skip`: leaves the draft unkept/unedited and creates no persistent skip state.
 - No action: draft remains ignored.
 
 ## Evidence And Highlighting
@@ -226,7 +222,7 @@ If kept/edited snippets exist:
 - User can traverse all flagged pairs by keyboard.
 - Loading a pair marks it visited.
 - Drafts do not enter final output until kept or edited.
-- Kept and edited markers are distinct.
+- Kept and edited both appear as the raised-issue navigation marker.
 - Related indicators ignore validation and severity.
 - Issues report changes with validation + indicator.
 - Complete blocks until all pairs are visited.

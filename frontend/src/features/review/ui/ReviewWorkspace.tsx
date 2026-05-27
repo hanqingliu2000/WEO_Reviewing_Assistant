@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties, PointerEvent } from "react";
 import { Panel } from "../../../shared/ui/Panel";
-import { StatusBadge } from "../../../shared/ui/StatusBadge";
 import type { ReviewItem, ReviewItemDetail, ReviewSession } from "../types/review";
 import { SessionHeader } from "./layout/SessionHeader";
 import { ReviewNavigator } from "./navigation/ReviewNavigator";
-import { SeriesChart } from "./review-surface/SeriesChart";
+import { ReviewSurface } from "./review-surface/ReviewSurface";
 
 type ReviewWorkspaceProps = {
   session: ReviewSession;
@@ -15,6 +14,8 @@ type ReviewWorkspaceProps = {
 
 const LEFT_PANEL_MIN_WIDTH = 280;
 const LEFT_PANEL_ABSOLUTE_MAX_WIDTH = 420;
+const RIGHT_PANEL_MIN_WIDTH = 220;
+const RIGHT_PANEL_ABSOLUTE_MAX_WIDTH = 380;
 
 function getLeftPanelMaxWidth() {
   if (typeof window === "undefined") {
@@ -28,26 +29,29 @@ function clampLeftPanelWidth(width: number) {
   return Math.min(Math.max(width, LEFT_PANEL_MIN_WIDTH), getLeftPanelMaxWidth());
 }
 
+function getRightPanelMaxWidth() {
+  if (typeof window === "undefined") {
+    return RIGHT_PANEL_ABSOLUTE_MAX_WIDTH;
+  }
+
+  return Math.max(RIGHT_PANEL_MIN_WIDTH, Math.min(RIGHT_PANEL_ABSOLUTE_MAX_WIDTH, Math.floor(window.innerWidth / 3)));
+}
+
+function clampRightPanelWidth(width: number) {
+  return Math.min(Math.max(width, RIGHT_PANEL_MIN_WIDTH), getRightPanelMaxWidth());
+}
+
 export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: ReviewWorkspaceProps) {
-  const tableRef = useRef<HTMLDivElement>(null);
   const [activeReviewItemId, setActiveReviewItemId] = useState(reviewItems[0]?.review_item_id ?? "");
-  const [leftPanelWidth, setLeftPanelWidth] = useState(340);
+  const [decimalPlaces, setDecimalPlaces] = useState(1);
+  const [fontSizeStep, setFontSizeStep] = useState(0);
+  const [leftPanelWidth, setLeftPanelWidth] = useState(LEFT_PANEL_MIN_WIDTH);
+  const [rightPanelWidth, setRightPanelWidth] = useState(280);
   const activeItem = useMemo(
     () => reviewItems.find((item) => item.review_item_id === activeReviewItemId) ?? reviewItems[0],
     [activeReviewItemId, reviewItems],
   );
   const activeDetail = activeItem ? reviewItemDetails[activeItem.review_item_id] : undefined;
-  const tableRows = activeDetail
-    ? [
-        { label: "Current", points: activeDetail.main_series.current.points },
-        { label: "Previous", points: activeDetail.main_series.previous.points },
-        ...(activeDetail.main_series.published ? [{ label: "Published", points: activeDetail.main_series.published.points }] : []),
-      ]
-    : [];
-  const tablePeriods = activeDetail?.main_series.current.points.map((point) => point.period) ?? [];
-  const tableGridStyle = {
-    gridTemplateColumns: `104px repeat(${tablePeriods.length}, 88px)`,
-  } as CSSProperties;
   const placeholderVisitedItemIds = useMemo(
     () => new Set(reviewItems.slice(1, 2).map((item) => item.review_item_id)),
     [reviewItems],
@@ -62,14 +66,9 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
   );
 
   useEffect(() => {
-    if (tableRef.current) {
-      tableRef.current.scrollLeft = tableRef.current.scrollWidth;
-    }
-  }, [activeDetail]);
-
-  useEffect(() => {
     const handleResize = () => {
       setLeftPanelWidth((currentWidth) => clampLeftPanelWidth(currentWidth));
+      setRightPanelWidth((currentWidth) => clampRightPanelWidth(currentWidth));
     };
 
     handleResize();
@@ -84,15 +83,34 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
     return null;
   }
 
+  const deskExplanations = activeDetail.issue_report_entries;
+
   return (
-    <main className="flex h-screen flex-col gap-4 overflow-hidden bg-[var(--color-page)] p-4 text-[var(--color-ink)]">
-      <SessionHeader session={session} />
+    <main
+      className="review-workspace flex h-screen flex-col gap-4 overflow-hidden bg-[var(--color-page)] p-4 text-[var(--color-ink)]"
+      style={
+        {
+          "--font-step": `${fontSizeStep}px`,
+          "--row-extra": `${fontSizeStep * 2}px`,
+        } as CSSProperties
+      }
+    >
+      <SessionHeader
+        decimalPlaces={decimalPlaces}
+        fontSizeStep={fontSizeStep}
+        onDecreaseDecimalPlaces={() => setDecimalPlaces((current) => Math.max(0, current - 1))}
+        onDecreaseFontSize={() => setFontSizeStep((current) => Math.max(0, current - 1))}
+        onIncreaseDecimalPlaces={() => setDecimalPlaces((current) => Math.min(3, current + 1))}
+        onIncreaseFontSize={() => setFontSizeStep((current) => Math.min(4, current + 1))}
+        session={session}
+      />
 
       <div
-        className="grid min-h-0 flex-1 gap-2 overflow-hidden [grid-template-columns:var(--left-panel-width,340px)_3px_minmax(480px,1fr)_minmax(260px,340px)] min-[2100px]:[grid-template-columns:var(--left-panel-width,340px)_3px_minmax(720px,1fr)_minmax(320px,420px)] max-[1220px]:[grid-template-columns:var(--left-panel-width,340px)_3px_minmax(420px,1fr)_minmax(230px,275px)] max-[980px]:[grid-template-columns:1fr]"
+        className="grid min-h-0 flex-1 gap-2 overflow-hidden [grid-template-columns:var(--left-panel-width,340px)_3px_minmax(520px,1fr)_3px_var(--right-panel-width,280px)] min-[2100px]:[grid-template-columns:var(--left-panel-width,340px)_3px_minmax(760px,1fr)_3px_var(--right-panel-width,280px)] max-[1220px]:[grid-template-columns:var(--left-panel-width,340px)_3px_minmax(460px,1fr)_3px_var(--right-panel-width,260px)] max-[980px]:grid max-[980px]:overflow-y-auto max-[980px]:[grid-template-columns:1fr]"
         aria-label="WEO review workbench"
         style={{
           "--left-panel-width": `${leftPanelWidth}px`,
+          "--right-panel-width": `${rightPanelWidth}px`,
         } as CSSProperties}
       >
         <Panel
@@ -132,101 +150,92 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
 
         <Panel
           title="Review Surface"
-          bodyClassName="overflow-hidden"
+          bodyClassName="overflow-auto [padding:8px] [row-gap:8px]"
+          className="max-[980px]:max-h-[calc(100vh-120px)]"
           hideHeader
         >
-          <div className="flex items-start justify-between gap-4 border-l-4 border-[var(--color-brand-primary)] bg-[var(--color-panel-muted)] p-3">
-            <div>
-              <p className="text-xs text-[var(--color-muted)]">
-                {activeItem.sector_name} &gt; {activeItem.validation_name} &gt; {activeItem.indicator_name}
-              </p>
-              <h3 className="text-sm">{activeItem.indicator_name}</h3>
-            </div>
-            <StatusBadge tone="warning">{activeItem.flagged_periods.length} flagged periods</StatusBadge>
-          </div>
-
-          <div
-            className="shrink-0 overflow-x-auto overflow-y-hidden rounded-md border border-[var(--color-border)] bg-white"
-            ref={tableRef}
-            aria-label="Current previous published table placeholder"
-          >
-            <div
-              className="grid min-h-7 w-max min-w-full items-center border-t-0 bg-[var(--color-panel-muted)] text-[11px] font-extrabold uppercase text-[var(--color-muted)]"
-              style={tableGridStyle}
-            >
-              <span className="sticky left-0 z-20 overflow-hidden bg-[var(--color-panel-muted)] px-2.5 py-[5px] text-ellipsis whitespace-nowrap shadow-[1px_0_0_var(--color-border)]">
-                Series
-              </span>
-              {tablePeriods.map((period) => (
-                <span className="overflow-hidden px-2.5 py-[5px] text-ellipsis whitespace-nowrap" key={period}>
-                  {period}
-                </span>
-              ))}
-            </div>
-            {tableRows.map((row) => (
-              <div
-                className="grid min-h-7 w-max min-w-full items-center border-t border-[var(--color-border)]"
-                key={row.label}
-                style={tableGridStyle}
-              >
-                <strong className="sticky left-0 z-10 overflow-hidden bg-white px-2.5 py-[5px] text-ellipsis whitespace-nowrap shadow-[1px_0_0_var(--color-border)]">
-                  {row.label}
-                </strong>
-                {tablePeriods.map((period) => {
-                  const value = row.points.find((point) => point.period === period)?.value;
-
-                  return (
-                    <span
-                      className={`overflow-hidden px-2.5 py-[5px] text-ellipsis whitespace-nowrap ${
-                        activeItem.flagged_periods.includes(period)
-                          ? "bg-[var(--color-warning-bg)] font-extrabold text-[var(--color-warning)]"
-                          : ""
-                      }`}
-                      key={period}
-                    >
-                      {value === null || value === undefined ? "n/a" : value.toFixed(1)}
-                    </span>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-
-          <SeriesChart flaggedPeriods={activeItem.flagged_periods} seriesSet={activeDetail.main_series} />
+          <ReviewSurface activeDetail={activeDetail} activeItem={activeItem} decimalPlaces={decimalPlaces} />
         </Panel>
+
+        <div
+          aria-label="Resize active draft"
+          className="self-stretch touch-none cursor-col-resize rounded-sm bg-[var(--color-border)] opacity-60 transition-colors hover:bg-[var(--color-brand-primary)] hover:opacity-100 focus-visible:bg-[var(--color-brand-primary)] focus-visible:opacity-100 focus-visible:outline-none max-[980px]:hidden"
+          onPointerDown={(event: PointerEvent<HTMLDivElement>) => {
+            event.currentTarget.setPointerCapture(event.pointerId);
+            event.preventDefault();
+          }}
+          onPointerMove={(event: PointerEvent<HTMLDivElement>) => {
+            if (event.buttons !== 1) {
+              return;
+            }
+
+            const nextWidth = clampRightPanelWidth(window.innerWidth - event.clientX - 16);
+            setRightPanelWidth(nextWidth);
+          }}
+          role="separator"
+          tabIndex={0}
+        />
 
         <Panel
           title="Active Draft"
+          bodyClassName="overflow-hidden p-3"
           hideHeader
         >
-          <div className="grid gap-2">
-            <h3 className="text-sm">{activeItem.indicator_name}</h3>
-            <p className="text-xs text-[var(--color-muted)]">
-              Draft generation, keep/edit state, and final output controls will attach here in later slices. This panel
-              stays scoped to the active validation + indicator pair.
-            </p>
-          </div>
+          <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,0.95fr)_minmax(0,1.05fr)] gap-3">
+            <section className="grid min-h-0 content-start gap-2 overflow-auto pr-1" aria-label="Desk explanation">
+              <h3 className="text-[13px] font-extrabold uppercase tracking-[0.02em] text-[var(--color-subtle)]">
+                Desk Explanation
+              </h3>
+              {deskExplanations.length ? (
+                <div className="grid gap-2 text-[12px] leading-[1.4] text-[var(--color-ink)]">
+                  {deskExplanations.map((entry) => (
+                    <article className="rounded-md bg-[var(--color-panel-muted)] p-2" key={entry.issue_report_entry_id}>
+                      <p className="mb-1 text-[10px] font-extrabold uppercase text-[var(--color-subtle)]">
+                        {entry.period_range}
+                      </p>
+                      <p>{entry.explanation}</p>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[12px] leading-[1.4] text-[var(--color-muted)]">
+                  No prior desk explanation is available in the mock issues report for this item.
+                </p>
+              )}
+            </section>
 
-          <div
-            className="grid min-h-[210px] content-start gap-2 rounded-md border border-[var(--color-border)] bg-[var(--color-panel-muted)] p-3 text-[13px] leading-[1.55] text-[var(--color-ink)]"
-            aria-label="Draft text placeholder"
-          >
-            Could the team clarify the driver of the flagged movement in {activeItem.flagged_periods.join(", ")}?
-          </div>
+            <section className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-2 border-t border-[var(--color-border)] pt-3" aria-label="Draft response area">
+              <h3 className="text-[13px] font-extrabold uppercase tracking-[0.02em] text-[var(--color-subtle)]">
+                Draft
+              </h3>
+              <div
+                className="min-h-0 overflow-auto rounded-md border border-[var(--color-border)] bg-[var(--color-panel-muted)] p-3 text-[13px] leading-[1.55] text-[var(--color-ink)]"
+                aria-label="Draft text placeholder"
+              >
+                Could the team clarify the driver of the flagged movement in {activeItem.flagged_periods.join(", ")}?
+              </div>
 
-          <div className="flex flex-wrap gap-2">
-            <button
-              className="min-h-[30px] rounded-md border border-[var(--color-border-strong)] bg-[var(--color-panel)] px-2.5 py-[5px] text-xs font-bold text-[var(--color-ink)] hover:border-[var(--color-brand-primary)]"
-              type="button"
-            >
-              Generate mock draft
-            </button>
-            <button
-              className="min-h-[30px] rounded-md border border-[var(--color-border-strong)] bg-[var(--color-panel)] px-2.5 py-[5px] text-xs font-bold text-[var(--color-ink)] hover:border-[var(--color-brand-primary)]"
-              type="button"
-            >
-              Keep
-            </button>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  className="min-h-[30px] rounded-md border border-[#087443] bg-[#15945b] px-2.5 py-[5px] text-xs font-bold text-white hover:bg-[#087443]"
+                  type="button"
+                >
+                  Keep
+                </button>
+                <button
+                  className="min-h-[30px] rounded-md border border-[#d99a00] bg-[#f2c14e] px-2.5 py-[5px] text-xs font-bold text-[#3b2a00] hover:bg-[#e0ad29]"
+                  type="button"
+                >
+                  Edit
+                </button>
+                <button
+                  className="min-h-[30px] rounded-md border border-[var(--color-border-strong)] bg-white px-2.5 py-[5px] text-xs font-bold text-[var(--color-ink)] hover:border-[var(--color-brand-primary)]"
+                  type="button"
+                >
+                  Skip
+                </button>
+              </div>
+            </section>
           </div>
         </Panel>
       </div>

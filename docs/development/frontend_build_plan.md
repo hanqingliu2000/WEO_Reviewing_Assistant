@@ -29,11 +29,11 @@ Detailed slice notes live in [reference/frontend_development_slices/](reference/
 | Milestone | Build | Must Include | Do Not Include | Done When |
 | --- | --- | --- | --- | --- |
 | 0 | Scaffold | React + Vite + TypeScript structure, folders from code organization | Business UI | Empty app runs on unrestricted machine |
-| 1 | UI Shell | Three-column layout, SessionHeader, settings placeholder, IMF/WEO placeholder, design tokens | Real navigation/chart/data | Layout works at laptop, half-ultrawide, ultrawide widths |
-| 2 | Left Navigation | Sector, severity, validation, indicator lists; keyboard traversal; visited/kept/edited markers | ReviewSurface visited logic | User can keyboard-traverse first to last flagged pair |
-| 3 | Center Review Surface | Active context, chart, data table, issues report panel, related indicators, metadata, time range | Saved highlights/export | Mock pair displays enough context for review |
-| 4 | Review State Flow | Zustand store, active pair, visited ids, kept ids, edited ids, local persistence, next unvisited | Real backend persistence | Reload restores visited/kept/edited state for same mock session |
-| 5 | Active Draft Panel | Mock draft, keep, edit, regenerate placeholder, error state | Real AI | Keep and edited markers update navigation |
+| 1 | UI Shell | Three-column layout, compact SessionHeader, switchable WEO/MCD REO brand block, searchable country selector, Other Settings placeholder, header decimal/font controls, design tokens, left/right resize handles | Real navigation/chart/data | Layout works at laptop, half-ultrawide, ultrawide widths |
+| 2 | Left Navigation | Sector, severity, validation, indicator lists; keyboard traversal; visited and raised-issue markers | ReviewSurface visited logic | User can keyboard-traverse first to last flagged pair |
+| 3 | Center Review Surface | Top data table, chart title, formula inside chart, line chart, related indicators table and empty state | Saved highlights/export, right-panel desk explanation | Mock pair displays enough center data context for review |
+| 4 | Review State Flow | Zustand store, active pair, visited ids, kept ids, edited ids, local persistence, next unvisited | Real backend persistence | Reload restores visited/raised-issue state for same mock session |
+| 5 | Active Draft Panel | Desk explanation from issues report, mock draft, keep, edit, skip, error state | Real AI | Keep/edit update the raised-issue marker; skip does not create a final state |
 | 6 | Complete / Overall Edit | Complete gate, no-issue completion, sector grouping, indicator merge, mock output | Real Outlook/file export | All-visited/no-issue and all-visited/with-issues paths both work |
 | 7 | Evidence / Highlighting | Evidence toggles, saved highlights, multiple chart intervals, add/remove highlight mode | Real evidence export | Saved highlights restore per pair |
 | 8 | Integration Readiness | Service interfaces, mock adapters, loading/error cleanup | Real HTTP implementation | Mock services can later be swapped without rewriting components |
@@ -42,18 +42,19 @@ Detailed slice notes live in [reference/frontend_development_slices/](reference/
 
 Center Review Surface must include:
 
-- `LineChartPanel`
+- `ReviewSurface`
 - `CurrentPreviousPublishedTable`
-- `IssuesReportPanel`
+- `SeriesChart`
 - `RelatedIndicatorsTable`
-- `MetadataAccordion`
 
 Important requirements:
 
 - table default horizontal scroll opens on newest/rightmost period.
-- chart has x-axis range/data zoom.
-- y-axis auto-scales to visible range with padding.
-- issues report filters by validation + indicator.
+- chart has x-axis range/data zoom through the explicit chart slider only.
+- ordinary mouse-wheel or vertical trackpad scrolling over the chart must not zoom the chart.
+- y-axis auto-scales to visible range; additional range-padding refinement can wait until a later chart pass.
+- formula appears inside the chart container.
+- desk series appears on the chart title row.
 - related indicators filter by indicator only.
 
 ## Milestone 4 Details
@@ -64,6 +65,7 @@ Persist locally until real backend persistence exists:
 - visited review item ids.
 - kept review item ids.
 - edited review item ids.
+- navigation may display kept and edited as one raised-issue marker even though state stores them separately.
 - draft snippets.
 - evidence selections.
 - saved highlights.

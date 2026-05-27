@@ -49,8 +49,9 @@ See [work_computer_stack_smoke_test.md](work_computer_stack_smoke_test.md).
 - AI never selects issues.
 - User visits pairs; `ReviewSurface` load success marks a pair as `visited`.
 - Visited pairs should be visually marked with subtle background/color coding.
-- User can `Keep` AI original text or edit draft text.
-- `kept` and `edited` both mean "will be raised," but they must have different markers before the indicator name.
+- User can `Keep` AI original text, edit draft text, or `Skip` without raising.
+- `kept` and `edited` both mean "will be raised." The navigation does not need to visually distinguish them; both can share one raised-issue marker.
+- `Skip` does not create a persistent third state; skipped/unkept/unedited drafts are ignored automatically.
 - Unkept and unedited drafts are ignored automatically.
 - Complete requires all flagged pairs visited.
 - If all pairs are visited and no kept/edited content exists, review completes with no email generated.
@@ -61,21 +62,18 @@ See [work_computer_stack_smoke_test.md](work_computer_stack_smoke_test.md).
 
 The center surface must include:
 
-- Active context header.
-- Flagged period / flagged data point count.
-- Validation explanation.
-- Recommended action.
 - Current / previous / optional published table.
+- Indicator code and indicator name above the chart.
+- Desk series on the right side of the chart title row.
+- Formula inside the chart container top area.
 - ECharts line chart.
-- Issues report history panel.
 - Related indicators table.
-- Metadata accordion.
 
 Important behavior:
 
 - Related indicators depend only on indicator.
-- Issues report depends on validation + indicator pair.
-- Time period control changes display range only.
+- Issues report / desk explanation depends on validation + indicator pair and is displayed in the right panel.
+- Decimal-place controls live in the top header next to settings and apply to center tables.
 - Evidence/highlight range is separate from display range.
 - Tables with time periods should initially scroll to the newest/rightmost period.
 - Current / previous / optional published table appears above the line chart.
@@ -86,12 +84,16 @@ Important behavior:
 Charts should support:
 
 - current / previous series by default.
-- optional published series via menu.
+- optional published series shown directly when data exists.
 - flagged point markers.
 - flagged period shading.
-- x-axis draggable range bar / data zoom.
-- y-axis auto-scale to visible data with modest padding.
+- x-axis draggable range bar / data zoom controlled only by the explicit chart slider.
+- no mouse-wheel or vertical trackpad zoom over the chart area.
+- y-axis auto-scale to visible data; additional padding refinement can wait until a later chart pass.
 - multiple non-contiguous highlight intervals.
+- Current line color: `#e66c37`.
+- Previous line color: `#0d6abf`.
+- Published line color: light grey.
 
 Nice-to-have:
 
@@ -99,9 +101,12 @@ Nice-to-have:
 - right-drag removes/shrinks highlight range.
 - if right-drag conflicts with browser behavior, provide toolbar modes for add/remove highlight.
 
-## 6. Issues Report Panel
+## 6. Desk Explanation And Draft Panel
 
-Add `IssuesReportPanel` between the line chart and related indicators.
+The right panel has two major areas:
+
+- `Desk Explanation`, sourced from prior issues report entries.
+- `Draft`, with mock draft text and review actions.
 
 It shows prior issue explanations / confirmations for the current validation + indicator pair.
 
@@ -114,6 +119,15 @@ Text behavior:
 
 - 2-3 lines should be readable.
 - longer text should clamp/collapse with expand or popover.
+
+The right panel should not repeat indicator id/name, recommended action, or flagged periods. These fields remain in mock data and may be used by later state or generation logic.
+
+Draft actions:
+
+- `Keep` is green.
+- `Edit` is yellow.
+- `Skip` is white.
+- `Skip` does not create a persistent skip state.
 
 ## 7. Visual Baseline
 
@@ -130,9 +144,14 @@ Colors:
 - Avoid large saturated red/green/yellow/orange areas.
 - Use red/orange/yellow only for issue/warning semantics.
 
-Logo:
+Top Header:
 
-- IMF / WEO identity is placeholder only for now.
+- Report identity is a switchable full-width colored brand block.
+- Supported mock identities are WEO and MCD REO.
+- Brand dropdown options should visually match the displayed brand block.
+- Country selection is a searchable dropdown that filters by country code or name.
+- Current country switching is UI-only for this frontend phase and does not reload real data.
+- Do not show reviewer name or submission timestamp in the compact top bar.
 
 Responsive targets:
 
@@ -182,16 +201,19 @@ See [frontend_code_organization.md](frontend_code_organization.md).
 ## 10. Must-Pass Checks For Early UI
 
 - Three columns do not overlap at laptop, half-ultrawide, and ultrawide widths.
+- Top header remains compact with searchable country and brand identity controls.
+- Left and right side panels can be manually resized on desktop layouts.
+- Left panel defaults to its configured minimum width.
 - No visible text below 11px.
 - Keyboard can traverse indicators, validations, and sectors.
 - Left navigation hierarchy is sector, validation, then indicator.
 - Severity is a marker/metadata, not a required hierarchy level.
 - Indicator is single-select.
 - Related indicators ignore validation/severity changes.
-- Issues report changes with validation + indicator.
+- Desk explanation changes with validation + indicator.
 - Table default scroll shows newest period.
 - Visited state survives reload in same browser/profile.
-- Kept and edited markers are distinguishable.
+- Kept and edited both appear as the raised-issue navigation marker.
 - Complete remains unavailable until all flagged pairs visited.
 
 ## 11. Reference Docs

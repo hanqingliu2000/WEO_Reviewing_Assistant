@@ -41,6 +41,7 @@ frontend/
             ValidationList.tsx
             IndicatorList.tsx
           review-surface/
+            ReviewSurface.tsx
             SeriesChart.tsx
     shared/
       styles/
@@ -60,7 +61,7 @@ frontend/
 | `features/review/ui/` | Review workbench screens and feature-specific UI | Current top-level shell is `ReviewWorkspace.tsx`. |
 | `features/review/ui/layout/` | Review-specific layout pieces | `SessionHeader` lives here because it depends on review session metadata. |
 | `features/review/ui/navigation/` | Sector / validation / indicator navigation | Includes collapse/expand behavior and keyboard traversal. |
-| `features/review/ui/review-surface/` | Active review content visualization | Current chart implementation is `SeriesChart.tsx`; future table and issues panels should live here. |
+| `features/review/ui/review-surface/` | Active center review content visualization | `ReviewSurface.tsx` owns the center table/chart/related-indicators composition; `SeriesChart.tsx` owns the ECharts chart. |
 | `features/review/runtime/` | Pure feature helpers and derived structures | `navigationTree.ts` builds the tree model from `ReviewItem[]`. Keep DOM-free logic here. |
 | `features/review/repo/` | Mock data and future review data adapters | Current mock dataset lives in `mockReviewData.ts`. Future service adapters can be added here or under a sibling `services/` folder. |
 | `features/review/types/` | Review-domain TypeScript types | `review.ts` is the canonical review feature contract. |
@@ -73,9 +74,9 @@ frontend/
 | --- | --- | --- |
 | `01_ui_shell` | `features/review/ui/`, `features/review/ui/layout/`, `shared/ui/`, `shared/styles/` | Layout, header, panel primitives, and baseline visual language. |
 | `02_left_navigation` | `features/review/ui/navigation/`, `features/review/runtime/`, `shared/ui/` | Sector, validation, indicator hierarchy and keyboard traversal. |
-| `03_center_review_surface` | `features/review/ui/review-surface/`, `features/review/repo/`, `features/review/types/`, `shared/ui/` | Chart, tables, issues history, related indicators, metadata. |
+| `03_center_review_surface` | `features/review/ui/review-surface/`, `features/review/repo/`, `features/review/types/`, `shared/ui/` | Center table, chart, formula-in-chart header, related indicators. |
 | `04_review_state_flow` | `features/review/ui/`, `features/review/runtime/`, future `features/review/state/` | Active pair, visited state, progress, and browser persistence. |
-| `05_active_draft_panel` | future `features/review/ui/draft/`, future `features/review/state/`, future `features/review/repo/` | Mock draft generation and keep/edit flow. |
+| `05_active_draft_panel` | current `features/review/ui/ReviewWorkspace.tsx`, future `features/review/ui/draft/`, future `features/review/state/`, future `features/review/repo/` | Right panel desk explanation, mock draft, and keep/edit/skip flow. |
 | `06_complete_overall_edit` | future `features/review/ui/completion/`, `features/review/types/`, future `features/review/state/` | Complete gate, no-issue completion, final grouping. |
 | `07_evidence_highlighting` | future `features/review/ui/evidence/`, `features/review/ui/review-surface/`, future `features/review/state/` | Evidence toggles and highlight state. |
 | `08_integration_readiness` | `features/review/repo/`, `features/review/types/`, future `features/review/services/` | Service boundary for later Flask/API integration. |

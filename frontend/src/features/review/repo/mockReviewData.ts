@@ -19,39 +19,14 @@ const COUNTRY = {
   name: "Fictional Economy A",
 };
 
-const ANNUAL_PERIODS = [
-  "2015",
-  "2016",
-  "2017",
-  "2018",
-  "2019",
-  "2020",
-  "2021",
-  "2022",
-  "2023",
-  "2024",
-  "2025",
-  "2026",
-  "2027",
-  "2028",
-];
+const ANNUAL_PERIODS = Array.from({ length: 2031 - 1980 + 1 }, (_, index) => String(1980 + index));
 
-const QUARTERLY_PERIODS = [
-  "2023Q1",
-  "2023Q2",
-  "2023Q3",
-  "2023Q4",
-  "2024Q1",
-  "2024Q2",
-  "2024Q3",
-  "2024Q4",
-  "2025Q1",
-  "2025Q2",
-  "2025Q3",
-  "2025Q4",
-  "2026Q1",
-  "2026Q2",
-];
+const QUARTERLY_PERIODS = Array.from({ length: (2027 - 1990 + 1) * 4 }, (_, index) => {
+  const year = 1990 + Math.floor(index / 4);
+  const quarter = (index % 4) + 1;
+
+  return `${year}Q${quarter}`;
+});
 
 const SECTORS = {
   real: { code: "01", name: "01 - National Accounts - Real" },

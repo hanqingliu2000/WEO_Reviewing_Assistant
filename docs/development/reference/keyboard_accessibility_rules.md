@@ -25,8 +25,8 @@ When focus is in the indicator list:
 ## Draft Panel
 
 - Textarea must be keyboard reachable.
-- Keep, regenerate, restore original, and complete controls must be keyboard reachable.
-- No hidden skip control is required.
+- Keep, edit, skip, and complete controls must be keyboard reachable.
+- Skip must not create a persistent skip state.
 
 ## Chart And Table
 

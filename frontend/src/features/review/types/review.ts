@@ -160,7 +160,7 @@ export type TimeSeries = {
  * Use case:
  * - Powers the main chart/table area and related indicators table.
  * - Current and previous should exist for every displayed indicator.
- * - Published is optional and can be enabled later from an options menu.
+ * - Published is optional and can be displayed directly when present.
  */
 export type IndicatorSeriesSet = {
   indicator_id: string;
