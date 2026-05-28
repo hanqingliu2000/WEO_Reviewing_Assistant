@@ -4,25 +4,38 @@ import type { IndicatorSeriesSet } from "../../types/review";
 
 type SeriesChartProps = {
   deskSeries?: string | null;
-  flaggedPeriods: string[];
   formula?: string | null;
+  highlightedPeriods: string[];
   indicatorId: string;
   indicatorName: string;
+  onAddHighlightedPeriodRange: (startPeriod: string, endPeriod: string) => void;
+  onRemoveHighlightedPeriodRange: (startPeriod: string, endPeriod: string) => void;
   seriesSet: IndicatorSeriesSet;
   visiblePeriods: string[];
 };
 
+type ChartPointerEvent = {
+  event?: {
+    button?: number;
+    preventDefault?: () => void;
+  };
+  offsetX: number;
+  offsetY: number;
+};
+
 export function SeriesChart({
   deskSeries,
-  flaggedPeriods,
   formula,
+  highlightedPeriods,
   indicatorId,
   indicatorName,
+  onAddHighlightedPeriodRange,
+  onRemoveHighlightedPeriodRange,
   seriesSet,
   visiblePeriods,
 }: SeriesChartProps) {
   const chartRef = useRef<HTMLDivElement>(null);
-  const flaggedPeriodSet = useMemo(() => new Set(flaggedPeriods), [flaggedPeriods]);
+  const highlightedPeriodSet = useMemo(() => new Set(highlightedPeriods), [highlightedPeriods]);
   const visiblePeriodSet = useMemo(() => new Set(visiblePeriods), [visiblePeriods]);
 
   useEffect(() => {
@@ -36,6 +49,9 @@ export function SeriesChart({
     const periods = seriesSet.current.points.map((point) => point.period).filter((period) => visiblePeriodSet.has(period));
     const valuesForPeriods = (points: typeof seriesSet.current.points) =>
       periods.map((period) => points.find((point) => point.period === period)?.value ?? null);
+    const highlightedPeriodColumns = periods
+      .map((period, index) => (highlightedPeriodSet.has(period) ? { xAxis: index } : null))
+      .filter((item): item is { xAxis: number } => item !== null);
     const series = [
       { name: "Current", data: valuesForPeriods(seriesSet.current.points), color: "#e66c37", z: 3 },
       { name: "Previous", data: valuesForPeriods(seriesSet.previous.points), color: "#0d6abf", z: 2 },
@@ -76,21 +92,85 @@ export function SeriesChart({
         lineStyle: { width: item.name === "Current" ? 2.4 : item.name === "Previous" ? 2 : 1.6 },
         z: item.z,
         data: item.data,
+        markLine:
+          item.name === "Current"
+            ? {
+                silent: true,
+                symbol: "none",
+                label: { show: false },
+                lineStyle: { color: "rgba(217, 154, 0, 0.36)", type: "solid", width: 14 },
+                data: highlightedPeriodColumns,
+              }
+            : undefined,
         markPoint:
           item.name === "Current"
             ? {
                 symbol: "circle",
                 symbolSize: 7,
-                itemStyle: { color: "#b42318" },
+                itemStyle: { color: "#b42318", borderColor: "#ffffff", borderWidth: 1 },
                 label: { show: false },
                 data: periods
                   .map((period, index) => ({ coord: [period, item.data[index]], period }))
-                  .filter((point) => flaggedPeriodSet.has(point.period) && point.coord[1] !== null),
+                  .filter((point) => highlightedPeriodSet.has(point.period) && point.coord[1] !== null),
               }
             : undefined,
           })),
     };
     let chart: echarts.ECharts | undefined;
+    let dragStartPeriod: string | null = null;
+    let dragButton: 0 | 2 | null = null;
+
+    function periodFromPointer(event: ChartPointerEvent) {
+      if (!chart || !chart.containPixel({ gridIndex: 0 }, [event.offsetX, event.offsetY])) {
+        return null;
+      }
+
+      const converted = chart.convertFromPixel({ gridIndex: 0 }, [event.offsetX, event.offsetY]);
+      const xValue = Array.isArray(converted) ? converted[0] : converted;
+      const periodIndex = Math.min(Math.max(Math.round(Number(xValue)), 0), periods.length - 1);
+      return periods[periodIndex] ?? null;
+    }
+
+    function handlePointerDown(event: ChartPointerEvent) {
+      const button = event.event?.button;
+
+      if (button !== 0 && button !== 2) {
+        return;
+      }
+
+      const period = periodFromPointer(event);
+
+      if (!period) {
+        return;
+      }
+
+      event.event?.preventDefault?.();
+      dragStartPeriod = period;
+      dragButton = button;
+    }
+
+    function handlePointerUp(event: ChartPointerEvent) {
+      const endPeriod = periodFromPointer(event);
+
+      if (!dragStartPeriod || !endPeriod || dragButton === null) {
+        dragStartPeriod = null;
+        dragButton = null;
+        return;
+      }
+
+      if (dragButton === 0) {
+        onAddHighlightedPeriodRange(dragStartPeriod, endPeriod);
+      } else {
+        onRemoveHighlightedPeriodRange(dragStartPeriod, endPeriod);
+      }
+
+      dragStartPeriod = null;
+      dragButton = null;
+    }
+
+    function handleContextMenu(event: Event) {
+      event.preventDefault();
+    }
 
     function ensureChart() {
       if (!element.clientWidth || !element.clientHeight) {
@@ -100,6 +180,8 @@ export function SeriesChart({
       if (!chart) {
         chart = echarts.init(element);
         chart.setOption(options);
+        chart.getZr().on("mousedown", handlePointerDown);
+        chart.getZr().on("mouseup", handlePointerUp);
       } else {
         chart.resize();
       }
@@ -107,14 +189,24 @@ export function SeriesChart({
 
     const resizeObserver = new ResizeObserver(ensureChart);
     resizeObserver.observe(element);
+    element.addEventListener("contextmenu", handleContextMenu);
     const frameId = window.requestAnimationFrame(ensureChart);
 
     return () => {
       window.cancelAnimationFrame(frameId);
       resizeObserver.disconnect();
+      element.removeEventListener("contextmenu", handleContextMenu);
+      chart?.getZr().off("mousedown", handlePointerDown);
+      chart?.getZr().off("mouseup", handlePointerUp);
       chart?.dispose();
     };
-  }, [flaggedPeriodSet, seriesSet, visiblePeriodSet]);
+  }, [
+    highlightedPeriodSet,
+    onAddHighlightedPeriodRange,
+    onRemoveHighlightedPeriodRange,
+    seriesSet,
+    visiblePeriodSet,
+  ]);
 
   return (
     <div

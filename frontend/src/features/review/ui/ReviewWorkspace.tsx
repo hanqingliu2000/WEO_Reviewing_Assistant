@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CSSProperties, PointerEvent } from "react";
 import { Panel } from "../../../shared/ui/Panel";
-import type { ReviewItem, ReviewItemDetail, ReviewSession } from "../types/review";
+import type { HighlightPeriodPayload, HighlightPeriodSource, ReviewItem, ReviewItemDetail, ReviewSession } from "../types/review";
 import { SessionHeader } from "./layout/SessionHeader";
 import { ReviewNavigator } from "./navigation/ReviewNavigator";
 import { ReviewSurface } from "./review-surface/ReviewSurface";
@@ -41,6 +41,23 @@ function clampRightPanelWidth(width: number) {
   return Math.min(Math.max(width, RIGHT_PANEL_MIN_WIDTH), getRightPanelMaxWidth());
 }
 
+function getPeriodRange(periods: string[], startPeriod: string, endPeriod: string) {
+  const startIndex = periods.indexOf(startPeriod);
+  const endIndex = periods.indexOf(endPeriod);
+
+  if (startIndex === -1 || endIndex === -1) {
+    return [];
+  }
+
+  const [rangeStart, rangeEnd] = startIndex <= endIndex ? [startIndex, endIndex] : [endIndex, startIndex];
+  return periods.slice(rangeStart, rangeEnd + 1);
+}
+
+function sortPeriodsByDisplayOrder(periods: string[], periodOrder: string[]) {
+  const periodSet = new Set(periods);
+  return periodOrder.filter((period) => periodSet.has(period));
+}
+
 export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: ReviewWorkspaceProps) {
   const [activeReviewItemId, setActiveReviewItemId] = useState(reviewItems[0]?.review_item_id ?? "");
   const [decimalPlaces, setDecimalPlaces] = useState(1);
@@ -48,6 +65,9 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
   const [leftPanelWidth, setLeftPanelWidth] = useState(LEFT_PANEL_MIN_WIDTH);
   const [rightPanelWidth, setRightPanelWidth] = useState(280);
   const [draftText, setDraftText] = useState("");
+  const [highlightedPeriods, setHighlightedPeriods] = useState<string[]>(reviewItems[0]?.flagged_periods ?? []);
+  const [highlightSource, setHighlightSource] = useState<HighlightPeriodSource>("default_flagged");
+  const [highlightUpdatedAt, setHighlightUpdatedAt] = useState(() => new Date().toISOString());
   const [evidenceOptions, setEvidenceOptions] = useState({
     table: false,
     chart: true,
@@ -59,6 +79,26 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
     [activeReviewItemId, reviewItems],
   );
   const activeDetail = activeItem ? reviewItemDetails[activeItem.review_item_id] : undefined;
+  const activePeriodOrder = useMemo(
+    () => activeDetail?.main_series.current.points.map((point) => point.period) ?? [],
+    [activeDetail],
+  );
+  const sortedHighlightedPeriods = useMemo(
+    () => sortPeriodsByDisplayOrder(highlightedPeriods, activePeriodOrder),
+    [activePeriodOrder, highlightedPeriods],
+  );
+  const highlightPayload = useMemo<HighlightPeriodPayload | null>(() => {
+    if (!activeItem) {
+      return null;
+    }
+
+    return {
+      highlighted_periods: sortedHighlightedPeriods,
+      review_item_id: activeItem.review_item_id,
+      source: highlightSource,
+      updated_at: highlightUpdatedAt,
+    };
+  }, [activeItem, highlightSource, highlightUpdatedAt, sortedHighlightedPeriods]);
   const placeholderVisitedItemIds = useMemo(
     () => new Set(reviewItems.slice(1, 2).map((item) => item.review_item_id)),
     [reviewItems],
@@ -97,8 +137,59 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
       chart: true,
       relatedIndicators: false,
     });
+    setHighlightedPeriods(activeItem.flagged_periods);
+    setHighlightSource("default_flagged");
+    setHighlightUpdatedAt(new Date().toISOString());
     setLastRaisedReviewItemId(null);
   }, [activeItem]);
+
+  const addHighlightedPeriodRange = useCallback((startPeriod: string, endPeriod: string) => {
+    const range = getPeriodRange(activePeriodOrder, startPeriod, endPeriod);
+
+    if (!range.length) {
+      return;
+    }
+
+    setHighlightedPeriods((currentPeriods) =>
+      sortPeriodsByDisplayOrder([...new Set([...currentPeriods, ...range])], activePeriodOrder),
+    );
+    setHighlightSource("user_modified");
+    setHighlightUpdatedAt(new Date().toISOString());
+  }, [activePeriodOrder]);
+
+  const removeHighlightedPeriodRange = useCallback((startPeriod: string, endPeriod: string) => {
+    const range = new Set(getPeriodRange(activePeriodOrder, startPeriod, endPeriod));
+
+    if (!range.size) {
+      return;
+    }
+
+    setHighlightedPeriods((currentPeriods) =>
+      sortPeriodsByDisplayOrder(currentPeriods.filter((period) => !range.has(period)), activePeriodOrder),
+    );
+    setHighlightSource("user_modified");
+    setHighlightUpdatedAt(new Date().toISOString());
+  }, [activePeriodOrder]);
+
+  const toggleHighlightedPeriod = useCallback((period: string) => {
+    if (!activePeriodOrder.includes(period)) {
+      return;
+    }
+
+    setHighlightedPeriods((currentPeriods) => {
+      const periodSet = new Set(currentPeriods);
+
+      if (periodSet.has(period)) {
+        periodSet.delete(period);
+      } else {
+        periodSet.add(period);
+      }
+
+      return sortPeriodsByDisplayOrder([...periodSet], activePeriodOrder);
+    });
+    setHighlightSource("user_modified");
+    setHighlightUpdatedAt(new Date().toISOString());
+  }, [activePeriodOrder]);
 
   if (!activeItem || !activeDetail) {
     return null;
@@ -116,6 +207,7 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
     // Placeholder for the future backend call. The payload shape mirrors what the API should receive.
     const raisePayload = {
       evidence: evidenceOptions,
+      highlight_periods: highlightPayload,
       review_item_id: activeItem.review_item_id,
       text: trimmedDraftText,
     };
@@ -192,7 +284,15 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
           className="max-[980px]:max-h-[calc(100vh-120px)]"
           hideHeader
         >
-          <ReviewSurface activeDetail={activeDetail} activeItem={activeItem} decimalPlaces={decimalPlaces} />
+          <ReviewSurface
+            activeDetail={activeDetail}
+            activeItem={activeItem}
+            decimalPlaces={decimalPlaces}
+            highlightedPeriods={sortedHighlightedPeriods}
+            onAddHighlightedPeriodRange={addHighlightedPeriodRange}
+            onRemoveHighlightedPeriodRange={removeHighlightedPeriodRange}
+            onToggleHighlightedPeriod={toggleHighlightedPeriod}
+          />
         </Panel>
 
         <div

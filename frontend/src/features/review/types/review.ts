@@ -277,6 +277,24 @@ export type Highlight = {
 };
 
 /**
+ * Period-level highlight payload reserved for the future backend boundary.
+ *
+ * Use case:
+ * - Keeps the v1 frontend highlight interaction simple: chart and tables share
+ *   one list of highlighted periods.
+ * - Can be sent directly to a later save/load endpoint without tying the UI to
+ *   the richer exported-evidence Highlight model too early.
+ */
+export type HighlightPeriodSource = "default_flagged" | "user_modified";
+
+export type HighlightPeriodPayload = {
+  review_item_id: string;
+  highlighted_periods: string[];
+  source: HighlightPeriodSource;
+  updated_at: string;
+};
+
+/**
  * Evidence and display settings for one review item.
  *
  * Use case:

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties, PointerEvent } from "react";
+import type { CSSProperties, MouseEvent, PointerEvent } from "react";
 import type { IndicatorSeriesSet, ReviewItem, ReviewItemDetail, TimeSeriesPoint } from "../../types/review";
 import { SeriesChart } from "./SeriesChart";
 
@@ -7,6 +7,10 @@ type ReviewSurfaceProps = {
   activeDetail: ReviewItemDetail;
   activeItem: ReviewItem;
   decimalPlaces: number;
+  highlightedPeriods: string[];
+  onAddHighlightedPeriodRange: (startPeriod: string, endPeriod: string) => void;
+  onRemoveHighlightedPeriodRange: (startPeriod: string, endPeriod: string) => void;
+  onToggleHighlightedPeriod: (period: string) => void;
 };
 
 type SeriesRow = {
@@ -38,7 +42,15 @@ function clampWidth(width: number, min: number, max: number) {
   return Math.min(Math.max(width, min), max);
 }
 
-export function ReviewSurface({ activeDetail, activeItem, decimalPlaces }: ReviewSurfaceProps) {
+export function ReviewSurface({
+  activeDetail,
+  activeItem,
+  decimalPlaces,
+  highlightedPeriods,
+  onAddHighlightedPeriodRange,
+  onRemoveHighlightedPeriodRange,
+  onToggleHighlightedPeriod,
+}: ReviewSurfaceProps) {
   const [mainSeriesWidth, setMainSeriesWidth] = useState(82);
   const [relatedIndicatorWidth, setRelatedIndicatorWidth] = useState(92);
   const [relatedDescriptorWidth, setRelatedDescriptorWidth] = useState(180);
@@ -59,6 +71,29 @@ export function ReviewSurface({ activeDetail, activeItem, decimalPlaces }: Revie
     gridTemplateColumns: `${relatedIndicatorWidth}px ${relatedDescriptorWidth}px repeat(${tablePeriods.length}, ${cellWidth}px)`,
   } as CSSProperties;
   const descriptorStickyStyle = { left: relatedIndicatorWidth } as CSSProperties;
+  const highlightedPeriodSet = useMemo(() => new Set(highlightedPeriods), [highlightedPeriods]);
+
+  function periodHighlightClass(period: string) {
+    return highlightedPeriodSet.has(period)
+      ? "bg-[var(--color-warning-bg)] font-extrabold text-[var(--color-warning)] shadow-[inset_0_0_0_1px_rgb(217_154_0_/_22%)]"
+      : "";
+  }
+
+  function handlePeriodClick(event: MouseEvent<HTMLElement>, period: string) {
+    if (!event.ctrlKey) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    onToggleHighlightedPeriod(period);
+  }
+
+  function handlePeriodContextMenu(event: MouseEvent<HTMLElement>) {
+    if (event.ctrlKey) {
+      event.preventDefault();
+    }
+  }
 
   useEffect(() => {
     const scrollToRight = (element: HTMLDivElement | null) => {
@@ -153,7 +188,14 @@ export function ReviewSurface({ activeDetail, activeItem, decimalPlaces }: Revie
               />
             </span>
             {tablePeriods.map((period) => (
-              <span className="overflow-hidden px-1.5 py-0.5 text-right text-ellipsis whitespace-nowrap" key={period}>
+              <span
+                className={`overflow-hidden px-1.5 py-0.5 text-right text-ellipsis whitespace-nowrap ${periodHighlightClass(period)}`}
+                data-highlighted={highlightedPeriodSet.has(period) ? "true" : undefined}
+                key={period}
+                onClick={(event) => handlePeriodClick(event, period)}
+                onContextMenu={handlePeriodContextMenu}
+                title="Ctrl+click to toggle period highlight"
+              >
                 {period}
               </span>
             ))}
@@ -169,12 +211,12 @@ export function ReviewSurface({ activeDetail, activeItem, decimalPlaces }: Revie
               </strong>
               {tablePeriods.map((period) => (
                 <span
-                  className={`overflow-hidden px-1.5 py-0.5 text-right text-ellipsis whitespace-nowrap tabular-nums ${
-                    activeItem.flagged_periods.includes(period)
-                      ? "bg-[var(--color-warning-bg)] font-extrabold text-[var(--color-warning)]"
-                      : ""
-                  }`}
+                  className={`overflow-hidden px-1.5 py-0.5 text-right text-ellipsis whitespace-nowrap tabular-nums ${periodHighlightClass(period)}`}
+                  data-highlighted={highlightedPeriodSet.has(period) ? "true" : undefined}
                   key={period}
+                  onClick={(event) => handlePeriodClick(event, period)}
+                  onContextMenu={handlePeriodContextMenu}
+                  title="Ctrl+click to toggle period highlight"
                 >
                   {formatNumber(valueByPeriod(row.points, period), decimalPlaces)}
                 </span>
@@ -186,10 +228,12 @@ export function ReviewSurface({ activeDetail, activeItem, decimalPlaces }: Revie
 
       <SeriesChart
         deskSeries={activeDetail.main_series.desk_series}
-        flaggedPeriods={activeItem.flagged_periods}
         formula={activeDetail.main_series.formula}
+        highlightedPeriods={highlightedPeriods}
         indicatorId={activeItem.indicator_id}
         indicatorName={activeItem.indicator_name}
+        onAddHighlightedPeriodRange={onAddHighlightedPeriodRange}
+        onRemoveHighlightedPeriodRange={onRemoveHighlightedPeriodRange}
         seriesSet={activeDetail.main_series}
         visiblePeriods={tablePeriods}
       />
@@ -230,7 +274,14 @@ export function ReviewSurface({ activeDetail, activeItem, decimalPlaces }: Revie
               />
             </span>
             {tablePeriods.map((period) => (
-              <span className="overflow-hidden px-1.5 py-1 text-right text-ellipsis whitespace-nowrap" key={period}>
+              <span
+                className={`overflow-hidden px-1.5 py-1 text-right text-ellipsis whitespace-nowrap ${periodHighlightClass(period)}`}
+                data-highlighted={highlightedPeriodSet.has(period) ? "true" : undefined}
+                key={period}
+                onClick={(event) => handlePeriodClick(event, period)}
+                onContextMenu={handlePeriodContextMenu}
+                title="Ctrl+click to toggle period highlight"
+              >
                 {period}
               </span>
             ))}
@@ -253,8 +304,12 @@ export function ReviewSurface({ activeDetail, activeItem, decimalPlaces }: Revie
                 </span>
                 {tablePeriods.map((period) => (
                   <span
-                    className="overflow-hidden px-1.5 py-1 text-right text-ellipsis whitespace-nowrap tabular-nums"
+                    className={`overflow-hidden px-1.5 py-1 text-right text-ellipsis whitespace-nowrap tabular-nums ${periodHighlightClass(period)}`}
+                    data-highlighted={highlightedPeriodSet.has(period) ? "true" : undefined}
                     key={period}
+                    onClick={(event) => handlePeriodClick(event, period)}
+                    onContextMenu={handlePeriodContextMenu}
+                    title="Ctrl+click to toggle period highlight"
                   >
                     {formatNumber(valueByPeriod(related.current.points, period), decimalPlaces)}
                   </span>
