@@ -300,13 +300,26 @@ function makeRelatedIndicator(
 }
 
 export const mockRelatedIndicatorSeries: Record<string, RelatedIndicatorSeries[]> = Object.fromEntries(
-  Object.values(INDICATORS).map((indicator) => [
-    indicator.indicator_id,
-    [
-      makeRelatedIndicator(indicator, "R1", "related level", 0.8),
-      makeRelatedIndicator(indicator, "R2", "related ratio", 0.12),
-    ],
-  ]),
+  Object.values(INDICATORS).map((indicator, index) => {
+    const relatedCount = 2 + (index % 7);
+    const relatedDescriptors = [
+      ["R1", "related level", 0.8],
+      ["R2", "related ratio", 0.12],
+      ["R3", "counterpart series", 0.55],
+      ["R4", "growth contribution", 0.08],
+      ["R5", "memo item", 0.32],
+      ["R6", "source alignment", 1.05],
+      ["R7", "historical comparator", 0.68],
+      ["R8", "projection comparator", 0.92],
+    ] as const;
+
+    return [
+      indicator.indicator_id,
+      relatedDescriptors
+        .slice(0, relatedCount)
+        .map(([suffix, nameSuffix, scale]) => makeRelatedIndicator(indicator, suffix, nameSuffix, scale)),
+    ];
+  }),
 );
 
 function reviewItem(params: {

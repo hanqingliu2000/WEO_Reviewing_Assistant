@@ -47,6 +47,13 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
   const [fontSizeStep, setFontSizeStep] = useState(0);
   const [leftPanelWidth, setLeftPanelWidth] = useState(LEFT_PANEL_MIN_WIDTH);
   const [rightPanelWidth, setRightPanelWidth] = useState(280);
+  const [draftText, setDraftText] = useState("");
+  const [evidenceOptions, setEvidenceOptions] = useState({
+    table: false,
+    chart: true,
+    relatedIndicators: false,
+  });
+  const [lastRaisedReviewItemId, setLastRaisedReviewItemId] = useState<string | null>(null);
   const activeItem = useMemo(
     () => reviewItems.find((item) => item.review_item_id === activeReviewItemId) ?? reviewItems[0],
     [activeReviewItemId, reviewItems],
@@ -79,11 +86,42 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
     };
   }, []);
 
+  useEffect(() => {
+    if (!activeItem) {
+      return;
+    }
+
+    setDraftText(`Could the team clarify the driver of the flagged movement in ${activeItem.flagged_periods.join(", ")}?`);
+    setEvidenceOptions({
+      table: false,
+      chart: true,
+      relatedIndicators: false,
+    });
+    setLastRaisedReviewItemId(null);
+  }, [activeItem]);
+
   if (!activeItem || !activeDetail) {
     return null;
   }
 
   const deskExplanations = activeDetail.issue_report_entries;
+
+  function raiseDraft() {
+    const trimmedDraftText = draftText.trim();
+
+    if (!trimmedDraftText) {
+      return;
+    }
+
+    // Placeholder for the future backend call. The payload shape mirrors what the API should receive.
+    const raisePayload = {
+      evidence: evidenceOptions,
+      review_item_id: activeItem.review_item_id,
+      text: trimmedDraftText,
+    };
+    void raisePayload;
+    setLastRaisedReviewItemId(activeItem.review_item_id);
+  }
 
   return (
     <main
@@ -106,7 +144,7 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
       />
 
       <div
-        className="grid min-h-0 flex-1 gap-2 overflow-hidden [grid-template-columns:var(--left-panel-width,340px)_3px_minmax(520px,1fr)_3px_var(--right-panel-width,280px)] min-[2100px]:[grid-template-columns:var(--left-panel-width,340px)_3px_minmax(760px,1fr)_3px_var(--right-panel-width,280px)] max-[1220px]:[grid-template-columns:var(--left-panel-width,340px)_3px_minmax(460px,1fr)_3px_var(--right-panel-width,260px)] max-[980px]:grid max-[980px]:overflow-y-auto max-[980px]:[grid-template-columns:1fr]"
+        className="font-scale-root grid min-h-0 flex-1 gap-2 overflow-hidden [grid-template-columns:var(--left-panel-width,340px)_3px_minmax(520px,1fr)_3px_var(--right-panel-width,280px)] min-[2100px]:[grid-template-columns:var(--left-panel-width,340px)_3px_minmax(760px,1fr)_3px_var(--right-panel-width,280px)] max-[1220px]:[grid-template-columns:var(--left-panel-width,340px)_3px_minmax(460px,1fr)_3px_var(--right-panel-width,260px)] max-[980px]:grid max-[980px]:overflow-y-auto max-[980px]:[grid-template-columns:1fr]"
         aria-label="WEO review workbench"
         style={{
           "--left-panel-width": `${leftPanelWidth}px`,
@@ -208,32 +246,56 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
               <h3 className="text-[13px] font-extrabold uppercase tracking-[0.02em] text-[var(--color-subtle)]">
                 Draft
               </h3>
-              <div
-                className="min-h-0 overflow-auto rounded-md border border-[var(--color-border)] bg-[var(--color-panel-muted)] p-3 text-[13px] leading-[1.55] text-[var(--color-ink)]"
-                aria-label="Draft text placeholder"
-              >
-                Could the team clarify the driver of the flagged movement in {activeItem.flagged_periods.join(", ")}?
-              </div>
+              <textarea
+                className="min-h-0 resize-none rounded-md border border-[var(--color-border)] bg-[var(--color-panel-muted)] p-3 text-[13px] leading-[1.55] text-[var(--color-ink)] outline-none focus:border-[var(--color-brand-primary)]"
+                aria-label="Draft text"
+                onChange={(event) => setDraftText(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.ctrlKey && event.key === "Enter") {
+                    event.preventDefault();
+                    raiseDraft();
+                  }
+                }}
+                value={draftText}
+              />
 
-              <div className="flex flex-wrap gap-2">
+              <div className="grid gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                 <button
-                  className="min-h-[30px] rounded-md border border-[#087443] bg-[#15945b] px-2.5 py-[5px] text-xs font-bold text-white hover:bg-[#087443]"
+                  className="min-h-[30px] rounded-md border border-[#d99a00] bg-[#f2c14e] px-3 py-[5px] text-xs font-extrabold text-[#3b2a00] hover:bg-[#e0ad29] disabled:cursor-default disabled:opacity-50"
+                  disabled={!draftText.trim()}
+                  onClick={raiseDraft}
                   type="button"
                 >
-                  Keep
+                  Raise
                 </button>
-                <button
-                  className="min-h-[30px] rounded-md border border-[#d99a00] bg-[#f2c14e] px-2.5 py-[5px] text-xs font-bold text-[#3b2a00] hover:bg-[#e0ad29]"
-                  type="button"
-                >
-                  Edit
-                </button>
-                <button
-                  className="min-h-[30px] rounded-md border border-[var(--color-border-strong)] bg-white px-2.5 py-[5px] text-xs font-bold text-[var(--color-ink)] hover:border-[var(--color-brand-primary)]"
-                  type="button"
-                >
-                  Skip
-                </button>
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    {[
+                      ["table", "Table"],
+                      ["chart", "Chart"],
+                      ["relatedIndicators", "Related indicators"],
+                    ].map(([key, label]) => (
+                      <label className="flex min-h-[30px] items-center gap-1.5 rounded-md border border-[var(--color-border)] bg-white px-2 text-[11px] font-bold text-[var(--color-ink)]" key={key}>
+                        <input
+                          checked={evidenceOptions[key as keyof typeof evidenceOptions]}
+                          onChange={(event) =>
+                            setEvidenceOptions((current) => ({
+                              ...current,
+                              [key]: event.target.checked,
+                            }))
+                          }
+                          type="checkbox"
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <p className="min-h-4 text-[11px] text-[var(--color-muted)]" aria-live="polite">
+                  {lastRaisedReviewItemId === activeItem.review_item_id
+                    ? "Draft marked to raise with the selected evidence."
+                    : "Ctrl+Enter also raises the current draft."}
+                </p>
               </div>
             </section>
           </div>

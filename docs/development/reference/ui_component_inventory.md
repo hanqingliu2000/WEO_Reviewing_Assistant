@@ -47,20 +47,22 @@ Acceptance:
 
 Owns:
 
-- switchable report identity brand block,
+- top-left tool name/logo placeholder,
 - searchable country selector,
 - decimal-place controls,
 - font-size controls.
 
 Rules:
 
-- report identity supports WEO and MCD REO mock brand blocks,
-- report identity dropdown options match the displayed brand block width, content, and style,
 - country search filters by country code or country name,
+- country selector groups assigned countries separately from other countries,
+- assigned countries show a light gray row background and a compact `P` or `B` primary/backup badge,
 - current country switching is UI-only in the mock phase,
 - header does not show reviewer name or submission timestamp,
+- country selector remains horizontally centered in the header,
 - font-size controls support the default size plus up to four larger steps,
 - increased font size should preserve outer panel bounds and rely on internal scrolling/wrapping/truncation.
+- font-size controls should not scale the top header itself.
 
 ## Navigation Components
 
@@ -69,11 +71,20 @@ Rules:
 Owns:
 
 - sector list,
+- WEO / MCD REO identity switch,
 - severity filter,
 - validation list,
 - indicator list,
 - visited/raised-issue progress display,
 - keyboard traversal.
+
+Rules:
+
+- identity switch uses modern segmented buttons,
+- selected WEO/MCD REO uses a solid brand color with subtle shadow,
+- unselected WEO/MCD REO uses a thick border in its own brand color with transparent or near-transparent fill,
+- identity switch typography is heavier/larger than sector labels.
+- navigation content under the identity switch uses a subtle matching border and very transparent matching background to communicate the active exercise scope.
 
 Inputs:
 
@@ -96,6 +107,7 @@ Acceptance:
 
 - hierarchy is `sector -> validation -> indicator`,
 - severity is displayed as validation metadata and does not need to be a separate hierarchy level,
+- validations inside each sector are ordered Critical, then High, then Low,
 - indicator is single-select,
 - active/visited/raised-issue states are visible,
 - next-unvisited action exists.
@@ -180,8 +192,9 @@ Owns:
 
 Rules:
 
-- indicator code and name appear above the line chart,
-- desk series aligns to the right of the same row.
+- indicator code, indicator name, and desk series appear inside the chart evidence region,
+- indicator code uses a strong title treatment,
+- desk series aligns to the right of the same title area.
 
 ### `LineChartPanel`
 
@@ -201,6 +214,7 @@ Rules:
 - published displays directly when present,
 - additional y-axis range-padding refinement can wait for a later chart pass,
 - formula is displayed inside the chart container above the plot,
+- chart evidence capture includes the title area, desk series, formula, and chart together,
 - ordinary mouse-wheel or vertical trackpad scrolling over the chart does not zoom the chart,
 - multiple non-contiguous highlight intervals can coexist.
 
@@ -306,10 +320,9 @@ Owns:
 Rules:
 
 - draft does not enter final output by default,
-- `Keep` makes it `kept`,
-- editing makes it `edited`,
-- `Skip` leaves it unkept/unedited,
-- no persistent skip state,
+- `Raise` captures current draft text and selected evidence options,
+- `Ctrl+Enter` triggers `Raise`,
+- evidence options default to Chart only and reset on active review item change,
 - no evidence media is shown here.
 
 ### `DraftEditor`

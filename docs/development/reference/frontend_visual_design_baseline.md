@@ -68,15 +68,17 @@ Rules:
 
 ## Header Identity
 
-Official identity assets are not required in the first version. The top-left identity is a mock, switchable, full-width brand block.
+Official identity assets are not required in the first version. Report identity switching lives at the top of the left navigation, not in the top header.
 
 Rules:
 
-- The displayed brand block includes `IMF / WEO` or `IMF / MCD REO` plus `Reviewing Assistant`.
 - WEO uses the primary brand blue.
-- MCD REO uses a gold brand block.
-- The brand selector dropdown options must match the displayed block width, content, and style.
-- Do not use a separate square logo next to the title in the current shell.
+- MCD REO uses a gold button.
+- Selected identity keeps its solid brand color, border, and light shadow.
+- Unselected identity uses a thick border in its own brand color with transparent or near-transparent fill, not a neutral black/gray.
+- Identity buttons should feel like a modern segmented control and use heavier/larger type than sector rows.
+- The navigation content controlled by the identity switch may use a subtle matching border and very transparent background to reinforce the active exercise.
+- The top header remains reserved for the tool identity placeholder, centered country selection, and display controls.
 
 ## Table Behavior
 

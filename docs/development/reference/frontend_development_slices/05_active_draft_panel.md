@@ -12,9 +12,9 @@ Build the right-side panel for the current active pair using mock issue-report e
 - mock draft text box,
 - draft status,
 - editable draft text,
-- green `Keep` action,
-- yellow `Edit` action,
-- white `Skip` action,
+- yellow `Raise` action,
+- `Ctrl+Enter` keyboard shortcut for `Raise`,
+- evidence checkboxes for `Table`, `Chart`, and `Related indicators`,
 - draft error state.
 
 ## Exclude
@@ -24,7 +24,7 @@ Build the right-side panel for the current active pair using mock issue-report e
 - flagged period display in the right panel,
 - real AI API,
 - API keys,
-- evidence display,
+- full evidence display,
 - all-kept-pairs list,
 - final email editor.
 
@@ -37,18 +37,18 @@ Build the right-side panel for the current active pair using mock issue-report e
 - Multiple issue-report entries can be shown as separate explanation snippets.
 - If no issue-report entry exists, show a quiet empty state.
 - Draft default status is `draft`.
-- Draft does not enter final output unless kept or edited.
-- `Keep` sets status to `kept`.
-- Editing or pressing `Edit` sets status to `edited`.
-- `Skip` leaves the draft unkept/unedited and does not create a persistent skip state.
-- Unkept and unedited drafts are ignored.
-- Removing kept/edited content happens later in overall edit.
+- Draft text is editable, and `Raise` uses the current text at click/shortcut time.
+- `Raise` is the only primary action in this panel for the current slice.
+- `Raise` should pass the active review item id, current draft text, and selected evidence options to the future backend API. In the mock phase this can remain a local placeholder handler.
+- `Ctrl+Enter` triggers the same raise handler as the `Raise` button.
+- Evidence options are `Table`, `Chart`, and `Related indicators`; default is only `Chart` selected.
+- Evidence options reset to their default state when the active review item changes.
+- Removing raised content happens later in overall edit.
 
 ## Acceptance
 
 - Active pair change shows that pair's issue-report explanation and draft.
-- Keep updates navigation marker.
-- Edit updates navigation marker.
-- Skip does not mark the item as kept or edited.
-- Kept and edited markers remain distinct.
+- Raise can use either the default draft or user-edited draft text.
+- Ctrl+Enter raises the current draft.
+- Evidence checkboxes reset on active pair change.
 - Draft error does not block review.

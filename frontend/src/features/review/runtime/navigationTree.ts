@@ -1,5 +1,11 @@
 import type { ReviewItem } from "../types/review";
 
+const SEVERITY_ORDER: Record<ReviewItem["severity"], number> = {
+  Critical: 0,
+  High: 1,
+  Low: 2,
+};
+
 export type NavigationValidation = {
   nodeId: string;
   validationId: string;
@@ -45,7 +51,18 @@ export function buildNavigationTree(items: ReviewItem[], hasQuarterlyData: boole
       validation.indicators.push(item);
     });
 
-  return Array.from(sectors.values());
+  return Array.from(sectors.values()).map((sector) => ({
+    ...sector,
+    validations: [...sector.validations].sort((first, second) => {
+      const severityDelta = SEVERITY_ORDER[first.severity] - SEVERITY_ORDER[second.severity];
+
+      if (severityDelta !== 0) {
+        return severityDelta;
+      }
+
+      return first.validationId.localeCompare(second.validationId);
+    }),
+  }));
 }
 
 export function getFirstReviewItemId(sector: NavigationSector) {

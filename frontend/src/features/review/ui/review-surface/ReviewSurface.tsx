@@ -39,8 +39,10 @@ function clampWidth(width: number, min: number, max: number) {
 }
 
 export function ReviewSurface({ activeDetail, activeItem, decimalPlaces }: ReviewSurfaceProps) {
+  const [mainSeriesWidth, setMainSeriesWidth] = useState(82);
   const [relatedIndicatorWidth, setRelatedIndicatorWidth] = useState(92);
   const [relatedDescriptorWidth, setRelatedDescriptorWidth] = useState(180);
+  const [relatedTableHeight, setRelatedTableHeight] = useState(136);
   const mainTableRef = useRef<HTMLDivElement>(null);
   const relatedTableRef = useRef<HTMLDivElement>(null);
   const tableRows = useMemo(() => makeSeriesRows(activeDetail.main_series), [activeDetail.main_series]);
@@ -51,7 +53,7 @@ export function ReviewSurface({ activeDetail, activeItem, decimalPlaces }: Revie
   const tablePeriods = allTablePeriods;
   const cellWidth = periodColumnWidth(activeItem.frequency);
   const mainTableGridStyle = {
-    gridTemplateColumns: `82px repeat(${tablePeriods.length}, ${cellWidth}px)`,
+    gridTemplateColumns: `${mainSeriesWidth}px repeat(${tablePeriods.length}, ${cellWidth}px)`,
   } as CSSProperties;
   const relatedTableGridStyle = {
     gridTemplateColumns: `${relatedIndicatorWidth}px ${relatedDescriptorWidth}px repeat(${tablePeriods.length}, ${cellWidth}px)`,
@@ -67,7 +69,25 @@ export function ReviewSurface({ activeDetail, activeItem, decimalPlaces }: Revie
 
     scrollToRight(mainTableRef.current);
     scrollToRight(relatedTableRef.current);
-  }, [activeDetail.main_series.indicator_id, tablePeriods.length, relatedIndicatorWidth, relatedDescriptorWidth]);
+  }, [activeDetail.main_series.indicator_id, tablePeriods.length, mainSeriesWidth, relatedIndicatorWidth, relatedDescriptorWidth]);
+
+  function beginMainSeriesColumnResize(event: PointerEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    const startX = event.clientX;
+    const startWidth = mainSeriesWidth;
+
+    function handlePointerMove(pointerEvent: globalThis.PointerEvent) {
+      setMainSeriesWidth(clampWidth(startWidth + pointerEvent.clientX - startX, 72, 128));
+    }
+
+    function stopResize() {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", stopResize);
+    }
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", stopResize);
+  }
 
   function beginRelatedColumnResize(
     event: PointerEvent<HTMLButtonElement>,
@@ -97,6 +117,24 @@ export function ReviewSurface({ activeDetail, activeItem, decimalPlaces }: Revie
     window.addEventListener("pointerup", stopResize);
   }
 
+  function beginRelatedTableHeightResize(event: PointerEvent<HTMLDivElement>) {
+    event.preventDefault();
+    const startY = event.clientY;
+    const startHeight = relatedTableHeight;
+
+    function handlePointerMove(pointerEvent: globalThis.PointerEvent) {
+      setRelatedTableHeight(clampWidth(startHeight + pointerEvent.clientY - startY, 86, 260));
+    }
+
+    function stopResize() {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", stopResize);
+    }
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", stopResize);
+  }
+
   return (
     <>
       <div className="shrink-0 overflow-hidden rounded-md border border-[var(--color-border)] bg-white">
@@ -105,8 +143,14 @@ export function ReviewSurface({ activeDetail, activeItem, decimalPlaces }: Revie
             className="grid min-h-5 w-max min-w-full items-center bg-[var(--color-panel-muted)] text-[10px] font-extrabold uppercase leading-none text-[var(--color-muted)]"
             style={mainTableGridStyle}
           >
-            <span className="sticky left-0 z-20 overflow-hidden bg-[var(--color-panel-muted)] px-2 py-0.5 text-ellipsis whitespace-nowrap shadow-[1px_0_0_var(--color-border)]">
+            <span className="sticky left-0 z-20 flex items-center justify-between gap-1 overflow-hidden bg-[var(--color-panel-muted)] px-2 py-0.5 text-ellipsis whitespace-nowrap shadow-[1px_0_0_var(--color-border)]">
               Series
+              <button
+                aria-label="Resize series column"
+                className="absolute top-0 right-[-4px] z-30 h-full w-2 cursor-col-resize bg-transparent hover:bg-[rgb(0_76_151_/_14%)] focus-visible:bg-[rgb(0_76_151_/_18%)] focus-visible:outline-none"
+                onPointerDown={beginMainSeriesColumnResize}
+                type="button"
+              />
             </span>
             {tablePeriods.map((period) => (
               <span className="overflow-hidden px-1.5 py-0.5 text-right text-ellipsis whitespace-nowrap" key={period}>
@@ -140,22 +184,12 @@ export function ReviewSurface({ activeDetail, activeItem, decimalPlaces }: Revie
         </div>
       </div>
 
-      <div className="flex items-end justify-between gap-3 px-1">
-        <div className="min-w-0">
-          <h3 className="[overflow-wrap:anywhere] text-[17px] font-extrabold leading-[1.1] text-[var(--color-ink)]">
-            {activeItem.indicator_id}
-          </h3>
-          <p className="mt-0.5 truncate text-[12px] leading-[1.25] text-[var(--color-muted)]">{activeItem.indicator_name}</p>
-        </div>
-        <div className="shrink-0 text-right text-[11px] leading-[1.2]">
-          <p className="font-extrabold uppercase text-[var(--color-subtle)]">Desk Series</p>
-          <p className="max-w-[220px] truncate text-[var(--color-ink)]">{activeDetail.main_series.desk_series ?? "n/a"}</p>
-        </div>
-      </div>
-
       <SeriesChart
+        deskSeries={activeDetail.main_series.desk_series}
         flaggedPeriods={activeItem.flagged_periods}
         formula={activeDetail.main_series.formula}
+        indicatorId={activeItem.indicator_id}
+        indicatorName={activeItem.indicator_name}
         seriesSet={activeDetail.main_series}
         visiblePeriods={tablePeriods}
       />
@@ -164,7 +198,12 @@ export function ReviewSurface({ activeDetail, activeItem, decimalPlaces }: Revie
         <div className="border-b border-[var(--color-border)] bg-[var(--color-panel-muted)] px-2 py-1">
           <h4 className="text-[11px] font-extrabold uppercase text-[var(--color-muted)]">Related Indicators</h4>
         </div>
-        <div className="overflow-x-auto overflow-y-hidden pb-2" ref={relatedTableRef} aria-label="Related indicators table">
+        <div
+          className="overflow-auto pb-2"
+          ref={relatedTableRef}
+          aria-label="Related indicators table"
+          style={{ height: relatedTableHeight }}
+        >
           <div
             className="grid min-h-6 w-max min-w-full items-center bg-[var(--color-panel-muted)] text-[10px] font-extrabold uppercase text-[var(--color-muted)]"
             style={relatedTableGridStyle}
@@ -237,6 +276,12 @@ export function ReviewSurface({ activeDetail, activeItem, decimalPlaces }: Revie
             </div>
           )}
         </div>
+        <div
+          aria-label="Resize related indicators height"
+          className="h-2 cursor-row-resize border-t border-[var(--color-border)] bg-[var(--color-panel-muted)] hover:bg-[rgb(0_76_151_/_12%)]"
+          onPointerDown={beginRelatedTableHeightResize}
+          role="separator"
+        />
       </div>
     </>
   );

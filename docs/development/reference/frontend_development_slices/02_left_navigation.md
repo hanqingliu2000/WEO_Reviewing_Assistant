@@ -10,6 +10,7 @@ Build hierarchical sector, validation, and indicator navigation using mock `Revi
 - conditional quarterly sectors,
 - nested validation list under each sector,
 - nested indicator list under each validation,
+- WEO / MCD REO report identity switch at the top of the navigation panel,
 - user-resizable left panel width,
 - configurable minimum and maximum bounds for user-resized left panel width,
 - default left panel width equal to the configured minimum width,
@@ -31,7 +32,13 @@ Build hierarchical sector, validation, and indicator navigation using mock `Revi
 
 - Hierarchy is `sector -> validation -> indicator`.
 - Severity is shown as metadata or a marker on validation/indicator rows, not as a required hierarchy level.
+- Within each sector, validation rows are always ordered Critical first, then High, then Low.
 - Validation severity appears as a colored rounded label: Critical red, High orange, Low yellow.
+- Report identity switch uses two adjacent modern segmented buttons. WEO uses the existing brand blue and MCD REO uses the existing gold.
+- Selected report identity keeps its solid brand color, border, and subtle shadow.
+- Unselected report identity uses a thick border in its own brand color with transparent or near-transparent fill, not black or neutral gray.
+- Report identity buttons should read as a higher-level switch than sector rows, with larger, heavier, more button-like typography than the sector labels.
+- The navigation area controlled by the identity switch should have a subtle border and very transparent background using the currently selected identity color, so the active exercise scope is visible.
 - Validation rows should display the validation id, such as `REVISION_30PCT`, instead of the long validation display name.
 - Indicator rows should display indicator code, such as `NGDP_R`, instead of long indicator display names.
 - Indicator active/focus treatment should stay inside the row bounds and must not overlap adjacent rows or status circles.

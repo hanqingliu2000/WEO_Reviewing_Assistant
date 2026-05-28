@@ -3,13 +3,24 @@ import * as echarts from "echarts";
 import type { IndicatorSeriesSet } from "../../types/review";
 
 type SeriesChartProps = {
+  deskSeries?: string | null;
   flaggedPeriods: string[];
   formula?: string | null;
+  indicatorId: string;
+  indicatorName: string;
   seriesSet: IndicatorSeriesSet;
   visiblePeriods: string[];
 };
 
-export function SeriesChart({ flaggedPeriods, formula, seriesSet, visiblePeriods }: SeriesChartProps) {
+export function SeriesChart({
+  deskSeries,
+  flaggedPeriods,
+  formula,
+  indicatorId,
+  indicatorName,
+  seriesSet,
+  visiblePeriods,
+}: SeriesChartProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const flaggedPeriodSet = useMemo(() => new Set(flaggedPeriods), [flaggedPeriods]);
   const visiblePeriodSet = useMemo(() => new Set(visiblePeriods), [visiblePeriods]);
@@ -106,7 +117,25 @@ export function SeriesChart({ flaggedPeriods, formula, seriesSet, visiblePeriods
   }, [flaggedPeriodSet, seriesSet, visiblePeriodSet]);
 
   return (
-    <div className="flex min-h-[292px] flex-1 flex-col overflow-hidden rounded-md border border-[var(--color-border)] bg-white">
+    <div
+      className="flex min-h-[292px] flex-1 flex-col overflow-hidden rounded-md border border-[var(--color-border)] bg-white"
+      data-evidence-target="chart"
+      aria-label="Chart evidence region"
+    >
+      <div className="grid gap-2.5 border-b border-[var(--color-border)] bg-white px-5 py-3.5 min-[1180px]:grid-cols-[minmax(0,1fr)_auto] min-[1180px]:items-end">
+        <div className="min-w-0">
+          <h3 className="[overflow-wrap:anywhere] font-[Arial_Black,Arial,sans-serif] text-[22px] font-black leading-none tracking-[0.01em] text-[var(--color-ink)]">
+            {indicatorId}
+          </h3>
+          <p className="mt-2 truncate text-[14px] font-semibold leading-[1.25] text-[var(--color-muted)]">{indicatorName}</p>
+        </div>
+        <div className="min-w-0 text-left min-[1180px]:text-right">
+          <p className="text-[10px] font-extrabold uppercase leading-none text-[var(--color-subtle)]">Desk Series</p>
+          <p className="max-w-[260px] truncate text-[12px] font-bold leading-[1.25] text-[var(--color-ink)]">
+            {deskSeries ?? "n/a"}
+          </p>
+        </div>
+      </div>
       <div className="border-b border-[var(--color-border)] bg-[var(--color-panel-muted)] px-2 py-1">
         <p className="truncate text-[11px] leading-[1.25] text-[var(--color-muted)]">
           <span className="font-extrabold uppercase text-[var(--color-subtle)]">Formula</span>{" "}

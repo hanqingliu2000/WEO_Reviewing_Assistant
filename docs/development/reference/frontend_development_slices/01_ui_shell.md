@@ -9,9 +9,9 @@ Create the first visible workbench shell.
 - three-column layout,
 - `SessionHeader`,
 - `Other Settings` placeholder,
+- tool name/logo placeholder in the top-left of the header,
 - decimal-place controls in the top header next to settings,
 - font-size controls in the top header near settings,
-- switchable report identity brand area for WEO and MCD REO,
 - searchable country filter in the top header,
 - base tokens and global layout styles,
 - user-resizable left navigation panel,
@@ -37,10 +37,12 @@ Create the first visible workbench shell.
 - Workbench layout is `left navigation -> center review surface -> right draft panel`.
 - Center review surface receives the largest flexible area by default.
 - Top header should stay compact and should not show reviewer name or submission timestamp.
-- Report identity is a full-width colored brand block, not a separate square logo.
-- Report identity can switch between WEO and MCD REO from a dropdown.
-- Report identity dropdown options should match the displayed brand block width, content, and visual style.
+- Top header keeps a small tool identity placeholder on the left while the country selector remains horizontally centered.
+- Report identity switching lives at the top of the left navigation, not in the top header.
 - Country selector is a searchable dropdown; it filters by country code or country name.
+- Country selector groups countries into assigned countries and other countries.
+- Assigned countries use a light gray row background and a compact right-side rounded `P` or `B` badge for primary or backup assignment.
+- Assigned and other country groups are separated by a thin light divider.
 - Current country switching is UI-only in the mock slice and does not need to reload the full mock review dataset yet.
 - Left navigation starts at its minimum width so the center surface has more room on first load.
 - Left navigation remains user-resizable within configured min/max bounds.
@@ -50,6 +52,7 @@ Create the first visible workbench shell.
 - Decimal-place controls live in the top `SessionHeader`, not inside the center table.
 - Font-size controls live in the top `SessionHeader` near settings.
 - Font-size controls support the default size plus up to four larger steps.
+- Font-size controls do not change the top header's own font size.
 - Increasing font size must preserve the outer workbench and panel bounds; content should wrap, truncate, or scroll internally instead of overflowing the page.
 
 ## Acceptance

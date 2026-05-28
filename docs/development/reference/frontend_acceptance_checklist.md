@@ -75,8 +75,9 @@ Use this checklist after each frontend implementation slice. It is a manual acce
 - Right panel shows only the current active pair.
 - Draft can be generated from mock service.
 - Draft status starts as `draft` and does not enter final output by default.
-- Keep marks the draft as `kept`.
-- Editing marks the draft as `edited`.
+- Raise captures the current editable draft text.
+- Ctrl+Enter triggers Raise.
+- Evidence checkboxes default to Chart only and reset when the active review item changes.
 - Regenerate handles edited text carefully.
 - Draft errors do not block review.
 - No evidence media is displayed in the draft panel.

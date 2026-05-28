@@ -49,9 +49,8 @@ See [work_computer_stack_smoke_test.md](work_computer_stack_smoke_test.md).
 - AI never selects issues.
 - User visits pairs; `ReviewSurface` load success marks a pair as `visited`.
 - Visited pairs should be visually marked with subtle background/color coding.
-- User can `Keep` AI original text, edit draft text, or `Skip` without raising.
+- User can edit draft text and `Raise` the current draft text when they want the issue included.
 - `kept` and `edited` both mean "will be raised." The navigation does not need to visually distinguish them; both can share one raised-issue marker.
-- `Skip` does not create a persistent third state; skipped/unkept/unedited drafts are ignored automatically.
 - Unkept and unedited drafts are ignored automatically.
 - Complete requires all flagged pairs visited.
 - If all pairs are visited and no kept/edited content exists, review completes with no email generated.
@@ -122,12 +121,12 @@ Text behavior:
 
 The right panel should not repeat indicator id/name, recommended action, or flagged periods. These fields remain in mock data and may be used by later state or generation logic.
 
-Draft actions:
+Draft action and evidence options:
 
-- `Keep` is green.
-- `Edit` is yellow.
-- `Skip` is white.
-- `Skip` does not create a persistent skip state.
+- `Raise` is yellow and captures the current editable draft text.
+- `Ctrl+Enter` triggers the same `Raise` behavior.
+- Evidence checkboxes are `Table`, `Chart`, and `Related indicators`; only `Chart` is selected by default.
+- Evidence checkboxes reset when the active review item changes.
 
 ## 7. Visual Baseline
 
@@ -146,10 +145,12 @@ Colors:
 
 Top Header:
 
-- Report identity is a switchable full-width colored brand block.
-- Supported mock identities are WEO and MCD REO.
-- Brand dropdown options should visually match the displayed brand block.
-- Country selection is a searchable dropdown that filters by country code or name.
+- Report identity switching lives at the top of the left navigation with WEO and MCD REO buttons.
+- Selected report identity uses its solid brand color; unselected report identity uses a semitransparent version of its own brand color.
+- Report identity buttons should read as higher-level controls than sector rows, with modern button styling and heavier type.
+- The top header keeps a small tool name/logo placeholder on the left while the country selector remains centered.
+- Country selection is a searchable dropdown that filters by country code or name and groups assigned countries separately from other countries.
+- Assigned countries show a light gray row background and a compact `P` or `B` badge for primary or backup assignment.
 - Current country switching is UI-only for this frontend phase and does not reload real data.
 - Do not show reviewer name or submission timestamp in the compact top bar.
 
@@ -201,7 +202,7 @@ See [frontend_code_organization.md](frontend_code_organization.md).
 ## 10. Must-Pass Checks For Early UI
 
 - Three columns do not overlap at laptop, half-ultrawide, and ultrawide widths.
-- Top header remains compact with searchable country and brand identity controls.
+- Top header remains compact with tool identity placeholder, centered searchable country selector, and display controls.
 - Left and right side panels can be manually resized on desktop layouts.
 - Left panel defaults to its configured minimum width.
 - No visible text below 11px.

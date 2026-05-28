@@ -32,13 +32,12 @@ Use mock data, mock draft text, and mock export results.
 - Pair becomes `visited` only after `ReviewSurface` loads successfully.
 - Right panel shows only the active pair draft.
 - Drafts do not enter final output by default.
-- `Keep` preserves AI original text.
-- Editing makes the draft `edited`.
+- `Raise` captures the current editable draft text for later output/API submission.
 - Unkept and unedited drafts are ignored.
 - `Complete` requires all flagged pairs to be visited.
 - No kept/edited snippets means no email generated.
 - Kept/edited snippets go to overall edit or mock output.
-- Evidence is managed in the center panel.
+- Evidence content is rendered in the center panel, while compact evidence inclusion choices can sit beside the right-panel Raise action.
 - Related indicators depend only on indicator.
 
 ## Suggested Order

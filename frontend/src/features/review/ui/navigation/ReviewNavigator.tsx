@@ -14,6 +14,49 @@ type ReviewNavigatorProps = {
   visitedItemIds?: ReadonlySet<string>;
 };
 
+type ReportIdentity = "weo" | "mcdreo";
+
+function ReportIdentitySwitch({
+  onSelectedIdentityChange,
+  selectedIdentity,
+}: {
+  onSelectedIdentityChange: (identity: ReportIdentity) => void;
+  selectedIdentity: ReportIdentity;
+}) {
+  const optionClass = (identity: ReportIdentity) => {
+    const isSelected = selectedIdentity === identity;
+
+    if (identity === "weo") {
+      return isSelected
+        ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)] text-white shadow-[0_8px_16px_rgb(0_76_151_/_24%)]"
+        : "border-[var(--color-brand-primary)] bg-transparent text-[var(--color-brand-primary)] hover:bg-[rgb(0_76_151_/_8%)]";
+    }
+
+    return isSelected
+      ? "border-[#d8a10f] bg-[#d8a10f] text-white shadow-[0_8px_16px_rgb(216_161_15_/_26%)]"
+      : "border-[#d8a10f] bg-transparent text-[#8a6100] hover:bg-[rgb(216_161_15_/_10%)]";
+  };
+
+  return (
+    <div className="grid shrink-0 grid-cols-2 gap-1.5 border-b border-[var(--color-border)] bg-[var(--color-panel)] p-2" aria-label="Report identity switch">
+      <button
+        className={`grid min-h-[44px] place-items-center rounded-md border-2 px-2 text-[16px] font-black tracking-[0.04em] transition-all ${optionClass("weo")}`}
+        onClick={() => onSelectedIdentityChange("weo")}
+        type="button"
+      >
+        <span>WEO</span>
+      </button>
+      <button
+        className={`grid min-h-[44px] place-items-center rounded-md border-2 px-2 text-[15px] font-black tracking-[0.02em] transition-all ${optionClass("mcdreo")}`}
+        onClick={() => onSelectedIdentityChange("mcdreo")}
+        type="button"
+      >
+        <span>MCD REO</span>
+      </button>
+    </div>
+  );
+}
+
 function restoreScrollPosition(container: HTMLDivElement, scrollTop: number) {
   container.scrollTop = scrollTop;
   requestAnimationFrame(() => {
@@ -131,6 +174,7 @@ export function ReviewNavigator({
   );
   const [expandedSectorIds, setExpandedSectorIds] = useState<Set<string>>(() => new Set(allSectorIds));
   const [expandedValidationIds, setExpandedValidationIds] = useState<Set<string>>(() => new Set(allValidationIds));
+  const [selectedIdentity, setSelectedIdentity] = useState<ReportIdentity>("weo");
   const pressedNavigationKeys = useRef(new Set<string>());
 
   useEffect(() => {
@@ -140,6 +184,16 @@ export function ReviewNavigator({
 
   const allCollapsed = expandedSectorIds.size === 0;
   const allExpanded = expandedSectorIds.size === allSectorIds.length && expandedValidationIds.size === allValidationIds.length;
+  const navigationExerciseStyle =
+    selectedIdentity === "weo"
+      ? {
+          backgroundColor: "rgb(0 76 151 / 0.035)",
+          borderColor: "rgb(0 76 151 / 0.34)",
+        }
+      : {
+          backgroundColor: "rgb(216 161 15 / 0.055)",
+          borderColor: "rgb(216 161 15 / 0.4)",
+        };
 
   function toggleSector(sectorCode: string) {
     setExpandedSectorIds((current) => {
@@ -167,55 +221,65 @@ export function ReviewNavigator({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-0">
+      <ReportIdentitySwitch
+        onSelectedIdentityChange={setSelectedIdentity}
+        selectedIdentity={selectedIdentity}
+      />
       <div
-        aria-label="Review hierarchy"
-        className="grid min-h-0 flex-1 auto-rows-max content-start gap-0.5 overflow-auto px-2 pb-2 [overflow-anchor:none]"
-        onBlur={(event) => {
-          const nextFocusedElement = event.relatedTarget instanceof Node ? event.relatedTarget : null;
-          if (!nextFocusedElement || !event.currentTarget.contains(nextFocusedElement)) {
-            pressedNavigationKeys.current.clear();
-          }
-        }}
-        onKeyDownCapture={(event) => handleNavigationKeyDown(event, onActiveReviewItemIdChange, pressedNavigationKeys)}
-        onKeyUpCapture={(event) => handleNavigationKeyUp(event, pressedNavigationKeys)}
-        role="tree"
+        className="flex min-h-0 flex-1 flex-col overflow-hidden border-y transition-colors"
+        style={navigationExerciseStyle}
+        aria-label={`${selectedIdentity === "weo" ? "WEO" : "MCD REO"} navigation scope`}
       >
-        <SectorList
-          activeReviewItemId={activeReviewItemId}
-          editedItemIds={editedItemIds}
-          expandedSectorIds={expandedSectorIds}
-          expandedValidationIds={expandedValidationIds}
-          keptItemIds={keptItemIds}
-          onActivateReviewItem={onActiveReviewItemIdChange}
-          onToggleSector={toggleSector}
-          onToggleValidation={toggleValidation}
-          sectors={navigationTree}
-          visitedItemIds={visitedItemIds}
-        />
-      </div>
+        <div
+          aria-label="Review hierarchy"
+          className="grid min-h-0 flex-1 auto-rows-max content-start gap-0.5 overflow-auto px-2 py-2 [overflow-anchor:none]"
+          onBlur={(event) => {
+            const nextFocusedElement = event.relatedTarget instanceof Node ? event.relatedTarget : null;
+            if (!nextFocusedElement || !event.currentTarget.contains(nextFocusedElement)) {
+              pressedNavigationKeys.current.clear();
+            }
+          }}
+          onKeyDownCapture={(event) => handleNavigationKeyDown(event, onActiveReviewItemIdChange, pressedNavigationKeys)}
+          onKeyUpCapture={(event) => handleNavigationKeyUp(event, pressedNavigationKeys)}
+          role="tree"
+        >
+          <SectorList
+            activeReviewItemId={activeReviewItemId}
+            editedItemIds={editedItemIds}
+            expandedSectorIds={expandedSectorIds}
+            expandedValidationIds={expandedValidationIds}
+            keptItemIds={keptItemIds}
+            onActivateReviewItem={onActiveReviewItemIdChange}
+            onToggleSector={toggleSector}
+            onToggleValidation={toggleValidation}
+            sectors={navigationTree}
+            visitedItemIds={visitedItemIds}
+          />
+        </div>
 
-      <div className="grid shrink-0 grid-cols-2 gap-2 border-t border-[var(--color-border)] bg-[var(--color-panel)] p-2" aria-label="Navigation tree controls">
-        <button
-          className="min-h-[30px] rounded-md border border-[var(--color-border-strong)] bg-white text-xs font-bold text-[var(--color-ink)] enabled:hover:border-[var(--color-brand-primary)] enabled:hover:text-[var(--color-brand-primary)] disabled:cursor-default disabled:opacity-[0.45]"
-          disabled={allCollapsed}
-          onClick={() => {
-            setExpandedSectorIds(new Set());
-          }}
-          type="button"
-        >
-          Collapse all
-        </button>
-        <button
-          className="min-h-[30px] rounded-md border border-[var(--color-border-strong)] bg-white text-xs font-bold text-[var(--color-ink)] enabled:hover:border-[var(--color-brand-primary)] enabled:hover:text-[var(--color-brand-primary)] disabled:cursor-default disabled:opacity-[0.45]"
-          disabled={allExpanded}
-          onClick={() => {
-            setExpandedSectorIds(new Set(allSectorIds));
-            setExpandedValidationIds(new Set(allValidationIds));
-          }}
-          type="button"
-        >
-          Expand all
-        </button>
+        <div className="grid shrink-0 grid-cols-2 gap-2 border-t border-[inherit] bg-white/70 p-2" aria-label="Navigation tree controls">
+          <button
+            className="min-h-[30px] rounded-md border border-[var(--color-border-strong)] bg-white text-xs font-bold text-[var(--color-ink)] enabled:hover:border-[var(--color-brand-primary)] enabled:hover:text-[var(--color-brand-primary)] disabled:cursor-default disabled:opacity-[0.45]"
+            disabled={allCollapsed}
+            onClick={() => {
+              setExpandedSectorIds(new Set());
+            }}
+            type="button"
+          >
+            Collapse all
+          </button>
+          <button
+            className="min-h-[30px] rounded-md border border-[var(--color-border-strong)] bg-white text-xs font-bold text-[var(--color-ink)] enabled:hover:border-[var(--color-brand-primary)] enabled:hover:text-[var(--color-brand-primary)] disabled:cursor-default disabled:opacity-[0.45]"
+            disabled={allExpanded}
+            onClick={() => {
+              setExpandedSectorIds(new Set(allSectorIds));
+              setExpandedValidationIds(new Set(allValidationIds));
+            }}
+            type="button"
+          >
+            Expand all
+          </button>
+        </div>
       </div>
     </div>
   );

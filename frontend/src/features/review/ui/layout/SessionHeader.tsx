@@ -11,39 +11,137 @@ type SessionHeaderProps = {
   session: ReviewSession;
 };
 
-type BrandChoice = "weo" | "mcdreo";
+type CountryAssignment = "primary" | "backup" | null;
+type CountryOption = {
+  isoCode: string;
+  name: string;
+  assignment: CountryAssignment;
+};
 
-const COUNTRY_OPTIONS = [
-  { isoCode: "XFA", name: "Fictional Economy A" },
-  { isoCode: "XFB", name: "Fictional Economy B" },
-  { isoCode: "XFC", name: "Fictional Economy C" },
+const COUNTRY_OPTIONS: CountryOption[] = [
+  { isoCode: "XFA", name: "Fictional Economy A", assignment: "primary" },
+  { isoCode: "XFB", name: "Fictional Economy B", assignment: "backup" },
+  { isoCode: "XFC", name: "Fictional Economy C", assignment: null },
+  { isoCode: "XFD", name: "Fictional Economy D", assignment: null },
+  { isoCode: "XFE", name: "Fictional Economy E", assignment: null },
 ];
 
-function BrandMark({ brand }: { brand: BrandChoice }) {
-  const isWeo = brand === "weo";
-
-  return (
-    <span className="grid text-white">
-      <span className="text-[11px] font-bold uppercase text-white/75">IMF / {isWeo ? "WEO" : "MCD REO"}</span>
-      <span className="text-[18px] font-extrabold leading-[1.05] text-white">Reviewing Assistant</span>
-    </span>
-  );
-}
-
-function brandSurfaceClass(brand: BrandChoice) {
-  return brand === "weo" ? "bg-[var(--color-brand-primary)]" : "bg-[#d8a10f]";
-}
-
-function BrandOption({ brand }: { brand: BrandChoice }) {
+function AssignmentBadge({ assignment }: { assignment: Exclude<CountryAssignment, null> }) {
   return (
     <span
-      className={`flex min-h-[48px] w-full min-w-[220px] items-center rounded-md px-3 py-1.5 shadow-sm ${brandSurfaceClass(
-        brand,
-      )}`}
+      className={`grid h-4 min-w-4 place-items-center rounded-[4px] px-0.5 text-[9px] font-extrabold uppercase leading-none ${
+        assignment === "primary"
+          ? "bg-[var(--color-brand-primary)] text-white"
+          : "bg-[var(--color-border-strong)] text-[var(--color-ink)]"
+      }`}
+      title={assignment === "primary" ? "Primary assigned country" : "Backup assigned country"}
     >
-      <BrandMark brand={brand} />
+      {assignment === "primary" ? "P" : "B"}
     </span>
   );
+}
+
+function ToolIdentityPlaceholder() {
+  return (
+    <div className="flex min-w-0 items-center gap-2" aria-label="Tool identity placeholder">
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-[rgb(0_76_151_/_22%)] bg-[var(--color-brand-primary)] text-[13px] font-extrabold text-white">
+        RA
+      </span>
+      <span className="min-w-0">
+        <span className="block truncate text-[13px] font-extrabold leading-[1.1] text-[var(--color-ink)]">
+          Reviewing Assistant
+        </span>
+        <span className="block truncate text-[10px] font-bold uppercase leading-[1.2] text-[var(--color-subtle)]">
+          Tool placeholder
+        </span>
+      </span>
+    </div>
+  );
+}
+
+function CountryOptionButton({
+  country,
+  isSelected,
+  onSelect,
+}: {
+  country: CountryOption;
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      className={`grid min-h-8 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm font-bold hover:bg-[var(--color-brand-bg)] ${
+        country.assignment ? "bg-[var(--color-panel-muted)]" : "bg-white"
+      } ${isSelected ? "text-[var(--color-brand-primary)] ring-1 ring-[rgb(0_76_151_/_18%)]" : "text-[var(--color-ink)]"}`}
+      onClick={onSelect}
+      type="button"
+    >
+      <span className="truncate">
+        {country.isoCode} - {country.name}
+      </span>
+      {country.assignment ? <AssignmentBadge assignment={country.assignment} /> : <span aria-hidden="true" />}
+    </button>
+  );
+}
+
+function CountryGroup({
+  countries,
+  emptyText,
+  onSelectCountry,
+  selectedCountryIsoCode,
+}: {
+  countries: CountryOption[];
+  emptyText: string;
+  onSelectCountry: (isoCode: string) => void;
+  selectedCountryIsoCode: string;
+}) {
+  if (!countries.length) {
+    return <p className="px-2 py-1.5 text-[12px] text-[var(--color-muted)]">{emptyText}</p>;
+  }
+
+  return (
+    <div className="grid gap-1">
+      {countries.map((country) => (
+        <CountryOptionButton
+          country={country}
+          isSelected={country.isoCode === selectedCountryIsoCode}
+          key={country.isoCode}
+          onSelect={() => onSelectCountry(country.isoCode)}
+        />
+      ))}
+    </div>
+  );
+}
+
+function fallbackCountry(session: ReviewSession): CountryOption {
+  return {
+    isoCode: session.country.iso_code,
+    name: session.country.name,
+    assignment: "primary",
+  };
+}
+
+function searchCountries(query: string) {
+  const normalizedQuery = query.trim().toLowerCase();
+
+  return COUNTRY_OPTIONS.filter(
+    (country) =>
+      !normalizedQuery ||
+      country.isoCode.toLowerCase().includes(normalizedQuery) ||
+      country.name.toLowerCase().includes(normalizedQuery),
+  );
+}
+
+function sortAssignedCountries(countries: CountryOption[]) {
+  const order: Record<Exclude<CountryAssignment, null>, number> = { primary: 0, backup: 1 };
+
+  return [...countries].sort((first, second) => {
+    if (!first.assignment || !second.assignment) {
+      return 0;
+    }
+
+    return order[first.assignment] - order[second.assignment];
+  });
 }
 
 export function SessionHeader({
@@ -55,67 +153,31 @@ export function SessionHeader({
   onIncreaseFontSize,
   session,
 }: SessionHeaderProps) {
-  const [brandChoice, setBrandChoice] = useState<BrandChoice>("weo");
-  const [brandMenuOpen, setBrandMenuOpen] = useState(false);
   const [countryMenuOpen, setCountryMenuOpen] = useState(false);
   const [countrySearch, setCountrySearch] = useState("");
   const [selectedCountryIsoCode, setSelectedCountryIsoCode] = useState(session.country.iso_code);
-  const selectedCountry =
-    COUNTRY_OPTIONS.find((country) => country.isoCode === selectedCountryIsoCode) ?? {
-      isoCode: session.country.iso_code,
-      name: session.country.name,
-    };
-  const filteredCountries = COUNTRY_OPTIONS.filter((country) => {
-    const query = countrySearch.trim().toLowerCase();
+  const selectedCountry = COUNTRY_OPTIONS.find((country) => country.isoCode === selectedCountryIsoCode) ?? fallbackCountry(session);
+  const filteredCountries = searchCountries(countrySearch);
+  const assignedCountries = sortAssignedCountries(filteredCountries.filter((country) => country.assignment));
+  const otherCountries = filteredCountries.filter((country) => !country.assignment);
 
-    return !query || country.isoCode.toLowerCase().includes(query) || country.name.toLowerCase().includes(query);
-  });
+  function selectCountry(isoCode: string) {
+    setSelectedCountryIsoCode(isoCode);
+    setCountryMenuOpen(false);
+    setCountrySearch("");
+  }
 
   return (
-    <header className="grid min-h-[58px] items-center gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-1.5 shadow-[var(--shadow-panel)] [grid-template-columns:minmax(220px,0.75fr)_minmax(300px,1fr)_minmax(300px,0.95fr)] max-[1220px]:[grid-template-columns:minmax(210px,0.75fr)_minmax(260px,0.9fr)_minmax(300px,1fr)] max-[980px]:[grid-template-columns:1fr]">
-      <div className="relative min-w-0" aria-label="IMF report identity">
-        <button
-          aria-expanded={brandMenuOpen}
-          aria-label="Choose report identity"
-          className="block w-full rounded-md border border-transparent p-0 text-left"
-          onClick={() => setBrandMenuOpen((current) => !current)}
-          type="button"
-        >
-          <BrandOption brand={brandChoice} />
-        </button>
-        {brandMenuOpen ? (
-          <div className="absolute left-0 top-[calc(100%+4px)] z-50 grid w-full min-w-[220px] gap-1 rounded-md border border-[var(--color-border)] bg-white p-1 shadow-[0_8px_20px_rgb(24_35_51_/_16%)]">
-            <button
-              className="block w-full rounded-md p-0 text-left"
-              onClick={() => {
-                setBrandChoice("weo");
-                setBrandMenuOpen(false);
-              }}
-              type="button"
-            >
-              <BrandOption brand="weo" />
-            </button>
-            <button
-              className="block w-full rounded-md p-0 text-left"
-              onClick={() => {
-                setBrandChoice("mcdreo");
-                setBrandMenuOpen(false);
-              }}
-              type="button"
-            >
-              <BrandOption brand="mcdreo" />
-            </button>
-          </div>
-        ) : null}
-      </div>
+    <header className="session-header grid min-h-[58px] items-center gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-1.5 shadow-[var(--shadow-panel)] [grid-template-columns:minmax(240px,1fr)_minmax(360px,520px)_minmax(240px,1fr)] max-[980px]:[grid-template-columns:1fr]">
+      <ToolIdentityPlaceholder />
 
-      <div className="flex min-w-0 items-center justify-center gap-3 max-[980px]:justify-start" aria-label="Review session summary">
-        <fieldset className="relative grid h-12 w-full max-w-[420px] content-center rounded-md border border-[var(--color-border)] px-2 pb-1 pt-0">
+      <div className="flex min-w-0 items-center justify-center" aria-label="Review session summary">
+        <fieldset className="relative mx-auto grid h-12 w-full max-w-[520px] content-center rounded-md border border-[var(--color-border)] px-2 pb-1 pt-0">
           <legend className="px-1 text-[10px] font-extrabold uppercase leading-none text-[var(--color-subtle)]">Country</legend>
           <button
             aria-expanded={countryMenuOpen}
             aria-label="Select country"
-            className="flex h-6 min-w-0 items-center justify-between gap-2 rounded-sm border border-[var(--color-border-strong)] bg-white px-2 text-left text-sm font-bold text-[var(--color-ink)]"
+            className="grid h-6 min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-1.5 rounded-sm border border-[var(--color-border-strong)] bg-white px-2 text-left text-sm font-bold text-[var(--color-ink)]"
             onClick={() => {
               setCountryMenuOpen((current) => !current);
               setCountrySearch("");
@@ -125,12 +187,13 @@ export function SessionHeader({
             <span className="truncate">
               {selectedCountry.isoCode} - {selectedCountry.name}
             </span>
+            {selectedCountry.assignment ? <AssignmentBadge assignment={selectedCountry.assignment} /> : <span />}
             <span className="shrink-0 text-[11px] text-[var(--color-muted)]" aria-hidden="true">
               v
             </span>
           </button>
           {countryMenuOpen ? (
-            <div className="absolute left-0 top-[calc(100%+4px)] z-50 grid w-full min-w-[260px] gap-1 rounded-md border border-[var(--color-border)] bg-white p-2 shadow-[0_8px_20px_rgb(24_35_51_/_16%)]">
+            <div className="absolute left-0 top-[calc(100%+4px)] z-50 grid w-full min-w-[360px] gap-2 rounded-md border border-[var(--color-border)] bg-white p-2 shadow-[0_8px_20px_rgb(24_35_51_/_16%)]">
               <input
                 aria-label="Search countries"
                 autoFocus
@@ -139,27 +202,26 @@ export function SessionHeader({
                 placeholder="Search country"
                 value={countrySearch}
               />
-              <div className="grid max-h-40 gap-1 overflow-auto">
-                {filteredCountries.length ? (
-                  filteredCountries.map((country) => (
-                    <button
-                      className={`rounded-sm px-2 py-1.5 text-left text-sm font-bold hover:bg-[var(--color-brand-bg)] ${
-                        country.isoCode === selectedCountry.isoCode ? "bg-[var(--color-brand-bg)] text-[var(--color-brand-primary)]" : ""
-                      }`}
-                      key={country.isoCode}
-                      onClick={() => {
-                        setSelectedCountryIsoCode(country.isoCode);
-                        setCountryMenuOpen(false);
-                        setCountrySearch("");
-                      }}
-                      type="button"
-                    >
-                      {country.isoCode} - {country.name}
-                    </button>
-                  ))
-                ) : (
-                  <p className="px-2 py-1.5 text-[12px] text-[var(--color-muted)]">No countries found</p>
-                )}
+              <div className="grid max-h-56 gap-2 overflow-auto">
+                <div className="grid gap-1">
+                  <p className="px-2 text-[10px] font-extrabold uppercase text-[var(--color-subtle)]">Assigned to you</p>
+                  <CountryGroup
+                    countries={assignedCountries}
+                    emptyText="No assigned countries found"
+                    onSelectCountry={selectCountry}
+                    selectedCountryIsoCode={selectedCountry.isoCode}
+                  />
+                </div>
+                <div className="h-px bg-[var(--color-border)]" />
+                <div className="grid gap-1">
+                  <p className="px-2 text-[10px] font-extrabold uppercase text-[var(--color-subtle)]">Other countries</p>
+                  <CountryGroup
+                    countries={otherCountries}
+                    emptyText="No other countries found"
+                    onSelectCountry={selectCountry}
+                    selectedCountryIsoCode={selectedCountry.isoCode}
+                  />
+                </div>
               </div>
             </div>
           ) : null}

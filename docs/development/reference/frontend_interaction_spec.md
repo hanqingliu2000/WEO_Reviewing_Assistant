@@ -35,7 +35,7 @@ Reviewer is responsible for:
 
 - visiting each flagged pair,
 - deciding whether to raise the issue,
-- keeping or editing draft text,
+- editing draft text and raising the current draft when needed,
 - making final edits in the overall edit screen.
 
 ## Pair State
@@ -163,9 +163,10 @@ When a pair loads:
 
 User actions:
 
-- `Keep`: status becomes `kept`.
-- Edit text: status becomes `edited`.
-- `Skip`: leaves the draft unkept/unedited and creates no persistent skip state.
+- `Raise`: captures the current draft text and selected evidence options for later output/API submission.
+- `Ctrl+Enter`: triggers the same raise behavior.
+- Evidence options: `Table`, `Chart`, and `Related indicators`, with only `Chart` selected by default.
+- Active pair changes reset evidence options to the default state.
 - No action: draft remains ignored.
 
 ## Evidence And Highlighting

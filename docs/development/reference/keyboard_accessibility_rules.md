@@ -25,8 +25,9 @@ When focus is in the indicator list:
 ## Draft Panel
 
 - Textarea must be keyboard reachable.
-- Keep, edit, skip, and complete controls must be keyboard reachable.
-- Skip must not create a persistent skip state.
+- Raise and evidence option checkboxes must be keyboard reachable.
+- `Ctrl+Enter` from the draft textarea should trigger the same Raise behavior as the button.
+- No action on a draft must not create a final state.
 
 ## Chart And Table
 

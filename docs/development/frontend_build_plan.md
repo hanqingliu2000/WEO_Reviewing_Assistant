@@ -29,13 +29,13 @@ Detailed slice notes live in [reference/frontend_development_slices/](reference/
 | Milestone | Build | Must Include | Do Not Include | Done When |
 | --- | --- | --- | --- | --- |
 | 0 | Scaffold | React + Vite + TypeScript structure, folders from code organization | Business UI | Empty app runs on unrestricted machine |
-| 1 | UI Shell | Three-column layout, compact SessionHeader, switchable WEO/MCD REO brand block, searchable country selector, Other Settings placeholder, header decimal/font controls, design tokens, left/right resize handles | Real navigation/chart/data | Layout works at laptop, half-ultrawide, ultrawide widths |
-| 2 | Left Navigation | Sector, severity, validation, indicator lists; keyboard traversal; visited and raised-issue markers | ReviewSurface visited logic | User can keyboard-traverse first to last flagged pair |
+| 1 | UI Shell | Three-column layout, compact SessionHeader, top-left tool placeholder, centered searchable assigned/other country selector, Other Settings placeholder, header decimal/font controls, design tokens, left/right resize handles | Real navigation/chart/data | Layout works at laptop, half-ultrawide, ultrawide widths |
+| 2 | Left Navigation | WEO/MCD REO segmented identity switch, sector, severity, validation, indicator lists; keyboard traversal; visited and raised-issue markers | ReviewSurface visited logic | User can keyboard-traverse first to last flagged pair |
 | 3 | Center Review Surface | Top data table, chart title, formula inside chart, line chart, related indicators table and empty state | Saved highlights/export, right-panel desk explanation | Mock pair displays enough center data context for review |
 | 4 | Review State Flow | Zustand store, active pair, visited ids, kept ids, edited ids, local persistence, next unvisited | Real backend persistence | Reload restores visited/raised-issue state for same mock session |
-| 5 | Active Draft Panel | Desk explanation from issues report, mock draft, keep, edit, skip, error state | Real AI | Keep/edit update the raised-issue marker; skip does not create a final state |
+| 5 | Active Draft Panel | Desk explanation from issues report, editable mock draft, Raise action, Ctrl+Enter shortcut, evidence checkboxes, error state | Real AI | Raise captures current draft text and selected evidence options |
 | 6 | Complete / Overall Edit | Complete gate, no-issue completion, sector grouping, indicator merge, mock output | Real Outlook/file export | All-visited/no-issue and all-visited/with-issues paths both work |
-| 7 | Evidence / Highlighting | Evidence toggles, saved highlights, multiple chart intervals, add/remove highlight mode | Real evidence export | Saved highlights restore per pair |
+| 7 | Evidence / Highlighting | Raise evidence checkboxes, chart evidence capture region, saved highlights, multiple chart intervals, add/remove highlight mode | Real evidence export | Saved highlights restore per pair |
 | 8 | Integration Readiness | Service interfaces, mock adapters, loading/error cleanup | Real HTTP implementation | Mock services can later be swapped without rewriting components |
 
 ## Milestone 3 Details
