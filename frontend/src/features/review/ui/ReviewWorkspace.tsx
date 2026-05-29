@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CSSProperties, PointerEvent } from "react";
 import { Panel } from "../../../shared/ui/Panel";
-import type { HighlightPeriodPayload, HighlightPeriodSource, ReviewItem, ReviewItemDetail, ReviewSession } from "../types/review";
+import type { HighlightPeriodPayload, ReviewItem, ReviewItemDetail, ReviewSession } from "../types/review";
 import { SessionHeader } from "./layout/SessionHeader";
 import { ReviewNavigator } from "./navigation/ReviewNavigator";
 import { ReviewSurface } from "./review-surface/ReviewSurface";
@@ -58,6 +58,15 @@ function sortPeriodsByDisplayOrder(periods: string[], periodOrder: string[]) {
   return periodOrder.filter((period) => periodSet.has(period));
 }
 
+function createDefaultHighlightPayload(reviewItem: ReviewItem): HighlightPeriodPayload {
+  return {
+    highlighted_periods: reviewItem.flagged_periods,
+    review_item_id: reviewItem.review_item_id,
+    source: "default_flagged",
+    updated_at: new Date().toISOString(),
+  };
+}
+
 export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: ReviewWorkspaceProps) {
   const [activeReviewItemId, setActiveReviewItemId] = useState(reviewItems[0]?.review_item_id ?? "");
   const [decimalPlaces, setDecimalPlaces] = useState(1);
@@ -65,9 +74,7 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
   const [leftPanelWidth, setLeftPanelWidth] = useState(LEFT_PANEL_MIN_WIDTH);
   const [rightPanelWidth, setRightPanelWidth] = useState(280);
   const [draftText, setDraftText] = useState("");
-  const [highlightedPeriods, setHighlightedPeriods] = useState<string[]>(reviewItems[0]?.flagged_periods ?? []);
-  const [highlightSource, setHighlightSource] = useState<HighlightPeriodSource>("default_flagged");
-  const [highlightUpdatedAt, setHighlightUpdatedAt] = useState(() => new Date().toISOString());
+  const [highlightSessions, setHighlightSessions] = useState<Record<string, HighlightPeriodPayload>>({});
   const [evidenceOptions, setEvidenceOptions] = useState({
     table: false,
     chart: true,
@@ -83,22 +90,19 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
     () => activeDetail?.main_series.current.points.map((point) => point.period) ?? [],
     [activeDetail],
   );
-  const sortedHighlightedPeriods = useMemo(
-    () => sortPeriodsByDisplayOrder(highlightedPeriods, activePeriodOrder),
-    [activePeriodOrder, highlightedPeriods],
-  );
   const highlightPayload = useMemo<HighlightPeriodPayload | null>(() => {
     if (!activeItem) {
       return null;
     }
 
+    const storedPayload = highlightSessions[activeItem.review_item_id] ?? createDefaultHighlightPayload(activeItem);
+
     return {
-      highlighted_periods: sortedHighlightedPeriods,
-      review_item_id: activeItem.review_item_id,
-      source: highlightSource,
-      updated_at: highlightUpdatedAt,
+      ...storedPayload,
+      highlighted_periods: sortPeriodsByDisplayOrder(storedPayload.highlighted_periods, activePeriodOrder),
     };
-  }, [activeItem, highlightSource, highlightUpdatedAt, sortedHighlightedPeriods]);
+  }, [activeItem, activePeriodOrder, highlightSessions]);
+  const sortedHighlightedPeriods = highlightPayload?.highlighted_periods ?? [];
   const placeholderVisitedItemIds = useMemo(
     () => new Set(reviewItems.slice(1, 2).map((item) => item.review_item_id)),
     [reviewItems],
@@ -137,47 +141,79 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
       chart: true,
       relatedIndicators: false,
     });
-    setHighlightedPeriods(activeItem.flagged_periods);
-    setHighlightSource("default_flagged");
-    setHighlightUpdatedAt(new Date().toISOString());
     setLastRaisedReviewItemId(null);
   }, [activeItem]);
 
   const addHighlightedPeriodRange = useCallback((startPeriod: string, endPeriod: string) => {
+    if (!activeItem) {
+      return;
+    }
+
     const range = getPeriodRange(activePeriodOrder, startPeriod, endPeriod);
 
     if (!range.length) {
       return;
     }
 
-    setHighlightedPeriods((currentPeriods) =>
-      sortPeriodsByDisplayOrder([...new Set([...currentPeriods, ...range])], activePeriodOrder),
-    );
-    setHighlightSource("user_modified");
-    setHighlightUpdatedAt(new Date().toISOString());
-  }, [activePeriodOrder]);
+    setHighlightSessions((currentSessions) => {
+      const currentPayload = currentSessions[activeItem.review_item_id] ?? createDefaultHighlightPayload(activeItem);
+
+      return {
+        ...currentSessions,
+        [activeItem.review_item_id]: {
+          highlighted_periods: sortPeriodsByDisplayOrder(
+            [...new Set([...currentPayload.highlighted_periods, ...range])],
+            activePeriodOrder,
+          ),
+          review_item_id: activeItem.review_item_id,
+          source: "user_modified",
+          updated_at: new Date().toISOString(),
+        },
+      };
+    });
+  }, [activeItem, activePeriodOrder]);
 
   const removeHighlightedPeriodRange = useCallback((startPeriod: string, endPeriod: string) => {
+    if (!activeItem) {
+      return;
+    }
+
     const range = new Set(getPeriodRange(activePeriodOrder, startPeriod, endPeriod));
 
     if (!range.size) {
       return;
     }
 
-    setHighlightedPeriods((currentPeriods) =>
-      sortPeriodsByDisplayOrder(currentPeriods.filter((period) => !range.has(period)), activePeriodOrder),
-    );
-    setHighlightSource("user_modified");
-    setHighlightUpdatedAt(new Date().toISOString());
-  }, [activePeriodOrder]);
+    setHighlightSessions((currentSessions) => {
+      const currentPayload = currentSessions[activeItem.review_item_id] ?? createDefaultHighlightPayload(activeItem);
+
+      return {
+        ...currentSessions,
+        [activeItem.review_item_id]: {
+          highlighted_periods: sortPeriodsByDisplayOrder(
+            currentPayload.highlighted_periods.filter((period) => !range.has(period)),
+            activePeriodOrder,
+          ),
+          review_item_id: activeItem.review_item_id,
+          source: "user_modified",
+          updated_at: new Date().toISOString(),
+        },
+      };
+    });
+  }, [activeItem, activePeriodOrder]);
 
   const toggleHighlightedPeriod = useCallback((period: string) => {
+    if (!activeItem) {
+      return;
+    }
+
     if (!activePeriodOrder.includes(period)) {
       return;
     }
 
-    setHighlightedPeriods((currentPeriods) => {
-      const periodSet = new Set(currentPeriods);
+    setHighlightSessions((currentSessions) => {
+      const currentPayload = currentSessions[activeItem.review_item_id] ?? createDefaultHighlightPayload(activeItem);
+      const periodSet = new Set(currentPayload.highlighted_periods);
 
       if (periodSet.has(period)) {
         periodSet.delete(period);
@@ -185,11 +221,17 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
         periodSet.add(period);
       }
 
-      return sortPeriodsByDisplayOrder([...periodSet], activePeriodOrder);
+      return {
+        ...currentSessions,
+        [activeItem.review_item_id]: {
+          highlighted_periods: sortPeriodsByDisplayOrder([...periodSet], activePeriodOrder),
+          review_item_id: activeItem.review_item_id,
+          source: "user_modified",
+          updated_at: new Date().toISOString(),
+        },
+      };
     });
-    setHighlightSource("user_modified");
-    setHighlightUpdatedAt(new Date().toISOString());
-  }, [activePeriodOrder]);
+  }, [activeItem, activePeriodOrder]);
 
   if (!activeItem || !activeDetail) {
     return null;
@@ -230,7 +272,7 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
         fontSizeStep={fontSizeStep}
         onDecreaseDecimalPlaces={() => setDecimalPlaces((current) => Math.max(0, current - 1))}
         onDecreaseFontSize={() => setFontSizeStep((current) => Math.max(0, current - 1))}
-        onIncreaseDecimalPlaces={() => setDecimalPlaces((current) => Math.min(3, current + 1))}
+        onIncreaseDecimalPlaces={() => setDecimalPlaces((current) => Math.min(9, current + 1))}
         onIncreaseFontSize={() => setFontSizeStep((current) => Math.min(4, current + 1))}
         session={session}
       />
@@ -317,10 +359,11 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
         <Panel
           title="Active Draft"
           bodyClassName="overflow-hidden p-3"
+          className="min-w-0"
           hideHeader
         >
-          <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,0.95fr)_minmax(0,1.05fr)] gap-3">
-            <section className="grid min-h-0 content-start gap-2 overflow-auto pr-1" aria-label="Desk explanation">
+          <div className="grid min-h-0 min-w-0 flex-1 grid-rows-[minmax(0,0.95fr)_minmax(0,1.05fr)] gap-3">
+            <section className="grid min-h-0 min-w-0 content-start gap-2 overflow-auto pr-1" aria-label="Desk explanation">
               <h3 className="text-[13px] font-extrabold uppercase tracking-[0.02em] text-[var(--color-subtle)]">
                 Desk Explanation
               </h3>
@@ -342,7 +385,7 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
               )}
             </section>
 
-            <section className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-2 border-t border-[var(--color-border)] pt-3" aria-label="Draft response area">
+            <section className="grid min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-2 border-t border-[var(--color-border)] pt-3" aria-label="Draft response area">
               <h3 className="text-[13px] font-extrabold uppercase tracking-[0.02em] text-[var(--color-subtle)]">
                 Draft
               </h3>
@@ -359,24 +402,28 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
                 value={draftText}
               />
 
-              <div className="grid gap-2">
-                <div className="flex flex-wrap items-center gap-2">
-                <button
-                  className="min-h-[30px] rounded-md border border-[#d99a00] bg-[#f2c14e] px-3 py-[5px] text-xs font-extrabold text-[#3b2a00] hover:bg-[#e0ad29] disabled:cursor-default disabled:opacity-50"
-                  disabled={!draftText.trim()}
-                  onClick={raiseDraft}
-                  type="button"
-                >
-                  Raise
-                </button>
-                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <div className="grid min-w-0 gap-2">
+                <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
+                  <button
+                    className="min-h-[30px] rounded-md border border-[#d99a00] bg-[#f2c14e] px-3 py-[5px] text-xs font-extrabold text-[#3b2a00] hover:bg-[#e0ad29] disabled:cursor-default disabled:opacity-50"
+                    disabled={!draftText.trim()}
+                    onClick={raiseDraft}
+                    type="button"
+                  >
+                    Raise
+                  </button>
+                  <div className="grid min-w-0 grid-cols-[minmax(0,auto)_minmax(0,auto)] items-center justify-start gap-x-2 gap-y-1 overflow-hidden">
                     {[
-                      ["table", "Table"],
-                      ["chart", "Chart"],
-                      ["relatedIndicators", "Related indicators"],
-                    ].map(([key, label]) => (
-                      <label className="flex min-h-[30px] items-center gap-1.5 rounded-md border border-[var(--color-border)] bg-white px-2 text-[11px] font-bold text-[var(--color-ink)]" key={key}>
+                      ["table", "Table", ""],
+                      ["chart", "Chart", ""],
+                      ["relatedIndicators", "Related indicators", "col-span-2"],
+                    ].map(([key, label, className]) => (
+                      <label
+                        className={`flex min-h-[18px] min-w-0 max-w-full items-center gap-1.5 text-[11px] font-bold leading-none text-[var(--color-ink)] ${className}`.trim()}
+                        key={key}
+                      >
                         <input
+                          className="shrink-0"
                           checked={evidenceOptions[key as keyof typeof evidenceOptions]}
                           onChange={(event) =>
                             setEvidenceOptions((current) => ({
@@ -386,7 +433,7 @@ export function ReviewWorkspace({ session, reviewItems, reviewItemDetails }: Rev
                           }
                           type="checkbox"
                         />
-                        {label}
+                        <span className="min-w-0 whitespace-normal leading-[1.15]">{label}</span>
                       </label>
                     ))}
                   </div>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties, MouseEvent, PointerEvent } from "react";
+import type { CSSProperties, MouseEvent, PointerEvent, ReactNode, RefObject } from "react";
 import type { IndicatorSeriesSet, ReviewItem, ReviewItemDetail, TimeSeriesPoint } from "../../types/review";
 import { SeriesChart } from "./SeriesChart";
 
@@ -16,21 +16,66 @@ type ReviewSurfaceProps = {
 type SeriesRow = {
   label: string;
   points: TimeSeriesPoint[];
+  tooltip?: string;
+};
+
+type PeriodTableRow = {
+  id: string;
+  points: TimeSeriesPoint[];
+  tooltip?: string;
+  values: Record<string, ReactNode>;
+};
+
+type PeriodTableLeadingColumn = {
+  key: string;
+  label: string;
+  onResizePointerDown?: (event: PointerEvent<HTMLButtonElement>) => void;
+  resizeAriaLabel?: string;
+  stickyLeft?: number;
+  zIndexClassName: string;
+};
+
+type PeriodDataTableProps = {
+  ariaLabel: string;
+  className?: string;
+  decimalPlaces: number;
+  emptyState?: ReactNode;
+  gridTemplateColumns: string;
+  highlightedPeriodSet: Set<string>;
+  leadingColumns: PeriodTableLeadingColumn[];
+  onPeriodClick: (event: MouseEvent<HTMLElement>, period: string) => void;
+  onPeriodContextMenu: (event: MouseEvent<HTMLElement>) => void;
+  periods: string[];
+  rows: PeriodTableRow[];
+  tableRef: RefObject<HTMLDivElement | null>;
+  viewportStyle?: CSSProperties;
 };
 
 function formatNumber(value: number | null | undefined, decimalPlaces: number) {
   return value === null || value === undefined ? "n/a" : value.toFixed(decimalPlaces);
 }
 
-function periodColumnWidth(frequency: ReviewItem["frequency"]) {
+function basePeriodColumnWidth(frequency: ReviewItem["frequency"]) {
   return frequency === "Q" ? 64 : 54;
 }
 
 function makeSeriesRows(seriesSet: IndicatorSeriesSet): SeriesRow[] {
   return [
-    { label: "Current", points: seriesSet.current.points },
-    { label: "Previous", points: seriesSet.previous.points },
-    ...(seriesSet.published ? [{ label: "Published", points: seriesSet.published.points }] : []),
+    { label: "CURRENT", points: seriesSet.current.points },
+    {
+      label: "PREVIOUS",
+      points: seriesSet.previous.points,
+      tooltip: "PREVIOUS reflects the data that was last signed-off.",
+    },
+    ...(seriesSet.published
+      ? [
+          {
+            label: "PUBLISHED",
+            points: seriesSet.published.points,
+            tooltip: "PUBLISHED reflects the data from the most recent WEO publication.",
+          },
+        ]
+      : []),
   ];
 }
 
@@ -38,8 +83,144 @@ function valueByPeriod(points: TimeSeriesPoint[], period: string) {
   return points.find((point) => point.period === period)?.value;
 }
 
+function calculatePeriodColumnWidth({
+  decimalPlaces,
+  frequency,
+  relatedSeries,
+  tablePeriods,
+  tableRows,
+}: {
+  decimalPlaces: number;
+  frequency: ReviewItem["frequency"];
+  relatedSeries: IndicatorSeriesSet[];
+  tablePeriods: string[];
+  tableRows: SeriesRow[];
+}) {
+  const valueLengths = [
+    ...tablePeriods.map((period) => period.length),
+    ...tableRows.flatMap((row) =>
+      tablePeriods.map((period) => formatNumber(valueByPeriod(row.points, period), decimalPlaces).length),
+    ),
+    ...relatedSeries.flatMap((related) =>
+      tablePeriods.map((period) => formatNumber(valueByPeriod(related.current.points, period), decimalPlaces).length),
+    ),
+  ];
+  const longestValueLength = Math.max(...valueLengths, 3);
+
+  return Math.max(basePeriodColumnWidth(frequency), Math.ceil(longestValueLength * 7 + 18));
+}
+
 function clampWidth(width: number, min: number, max: number) {
   return Math.min(Math.max(width, min), max);
+}
+
+const RELATED_TABLE_HEADER_HEIGHT = 24;
+const RELATED_TABLE_ROW_HEIGHT = 24;
+const RELATED_TABLE_SCROLLBAR_PADDING = 8;
+const RELATED_TABLE_MIN_DATA_ROWS = 2;
+
+function relatedTableHeightForRows(rowCount: number) {
+  const visibleRowCount = Math.max(RELATED_TABLE_MIN_DATA_ROWS, rowCount);
+  return RELATED_TABLE_HEADER_HEIGHT + visibleRowCount * RELATED_TABLE_ROW_HEIGHT + RELATED_TABLE_SCROLLBAR_PADDING;
+}
+
+function periodHighlightClass(period: string, highlightedPeriodSet: Set<string>) {
+  return highlightedPeriodSet.has(period)
+    ? "bg-[var(--color-warning-bg)] font-extrabold text-[var(--color-warning)]"
+    : "";
+}
+
+function PeriodDataTable({
+  ariaLabel,
+  className = "",
+  decimalPlaces,
+  emptyState,
+  gridTemplateColumns,
+  highlightedPeriodSet,
+  leadingColumns,
+  onPeriodClick,
+  onPeriodContextMenu,
+  periods,
+  rows,
+  tableRef,
+  viewportStyle,
+}: PeriodDataTableProps) {
+  const gridStyle = { gridTemplateColumns } as CSSProperties;
+
+  return (
+    <div
+      aria-label={ariaLabel}
+      className={`overflow-auto pb-2 text-[10px] leading-none ${className}`}
+      ref={tableRef}
+      style={viewportStyle}
+    >
+      <div
+        className="grid min-h-6 w-max min-w-full items-center bg-[var(--color-panel-muted)] font-extrabold uppercase text-[var(--color-muted)]"
+        style={gridStyle}
+      >
+        {leadingColumns.map((column) => (
+          <span
+            className={`sticky flex items-center justify-between gap-1 overflow-hidden bg-[var(--color-panel-muted)] px-2 py-1 text-ellipsis whitespace-nowrap shadow-[1px_0_0_var(--color-border)] ${column.zIndexClassName}`}
+            key={column.key}
+            style={column.stickyLeft === undefined ? undefined : { left: column.stickyLeft }}
+          >
+            {column.label}
+            {column.onResizePointerDown && column.resizeAriaLabel ? (
+              <button
+                aria-label={column.resizeAriaLabel}
+                className="absolute top-0 right-[-4px] z-40 h-full w-2 cursor-col-resize bg-transparent hover:bg-[rgb(0_76_151_/_14%)] focus-visible:bg-[rgb(0_76_151_/_18%)] focus-visible:outline-none"
+                onPointerDown={column.onResizePointerDown}
+                type="button"
+              />
+            ) : null}
+          </span>
+        ))}
+        {periods.map((period) => (
+          <span
+            className="cursor-pointer overflow-hidden px-1.5 py-1 text-right text-ellipsis whitespace-nowrap hover:bg-[rgb(0_76_151_/_8%)]"
+            key={period}
+            onClick={(event) => onPeriodClick(event, period)}
+            onContextMenu={onPeriodContextMenu}
+            title="Click to toggle period highlight"
+          >
+            {period}
+          </span>
+        ))}
+      </div>
+      {rows.length > 0
+        ? rows.map((row) => (
+            <div
+              className="grid min-h-6 w-max min-w-full items-stretch shadow-[inset_0_1px_0_var(--color-border)]"
+              key={row.id}
+              style={gridStyle}
+            >
+              {leadingColumns.map((column) => (
+                <strong
+                  className={`sticky flex items-center overflow-hidden bg-white px-2 py-1 text-ellipsis whitespace-nowrap shadow-[inset_0_1px_0_var(--color-border),1px_0_0_var(--color-border)] ${column.zIndexClassName}`}
+                  key={column.key}
+                  style={column.stickyLeft === undefined ? undefined : { left: column.stickyLeft }}
+                  title={row.tooltip}
+                >
+                  {row.values[column.key]}
+                </strong>
+              ))}
+              {periods.map((period) => (
+                <span
+                  className={`flex cursor-pointer items-center justify-end overflow-hidden px-1.5 py-1 text-right whitespace-nowrap tabular-nums shadow-[inset_0_1px_0_var(--color-border)] ${periodHighlightClass(period, highlightedPeriodSet)}`}
+                  data-highlighted={highlightedPeriodSet.has(period) ? "true" : undefined}
+                  key={period}
+                  onClick={(event) => onPeriodClick(event, period)}
+                  onContextMenu={onPeriodContextMenu}
+                  title="Click to toggle period highlight"
+                >
+                  {formatNumber(valueByPeriod(row.points, period), decimalPlaces)}
+                </span>
+              ))}
+            </div>
+          ))
+        : emptyState}
+    </div>
+  );
 }
 
 export function ReviewSurface({
@@ -54,7 +235,9 @@ export function ReviewSurface({
   const [mainSeriesWidth, setMainSeriesWidth] = useState(82);
   const [relatedIndicatorWidth, setRelatedIndicatorWidth] = useState(92);
   const [relatedDescriptorWidth, setRelatedDescriptorWidth] = useState(180);
-  const [relatedTableHeight, setRelatedTableHeight] = useState(136);
+  const [relatedTableHeight, setRelatedTableHeight] = useState(() =>
+    relatedTableHeightForRows(activeDetail.related_indicators.length),
+  );
   const mainTableRef = useRef<HTMLDivElement>(null);
   const relatedTableRef = useRef<HTMLDivElement>(null);
   const tableRows = useMemo(() => makeSeriesRows(activeDetail.main_series), [activeDetail.main_series]);
@@ -63,27 +246,52 @@ export function ReviewSurface({
     [activeDetail.main_series.current.points],
   );
   const tablePeriods = allTablePeriods;
-  const cellWidth = periodColumnWidth(activeItem.frequency);
-  const mainTableGridStyle = {
-    gridTemplateColumns: `${mainSeriesWidth}px repeat(${tablePeriods.length}, ${cellWidth}px)`,
-  } as CSSProperties;
-  const relatedTableGridStyle = {
-    gridTemplateColumns: `${relatedIndicatorWidth}px ${relatedDescriptorWidth}px repeat(${tablePeriods.length}, ${cellWidth}px)`,
-  } as CSSProperties;
-  const descriptorStickyStyle = { left: relatedIndicatorWidth } as CSSProperties;
+  const mainTableRows = useMemo<PeriodTableRow[]>(
+    () =>
+      tableRows.map((row) => ({
+        id: row.label,
+        points: row.points,
+        tooltip: row.tooltip,
+        values: {
+          series: row.label,
+        },
+      })),
+    [tableRows],
+  );
+  const relatedTableRows = useMemo<PeriodTableRow[]>(
+    () =>
+      activeDetail.related_indicators.map((related) => ({
+        id: related.indicator_id,
+        points: related.current.points,
+        values: {
+          descriptor: related.descriptor ?? related.indicator_name,
+          indicator: related.indicator_id,
+        },
+      })),
+    [activeDetail.related_indicators],
+  );
+  const cellWidth = useMemo(
+    () =>
+      calculatePeriodColumnWidth({
+        decimalPlaces,
+        frequency: activeItem.frequency,
+        relatedSeries: activeDetail.related_indicators,
+        tablePeriods,
+        tableRows,
+      }),
+    [activeDetail.related_indicators, activeItem.frequency, decimalPlaces, tablePeriods, tableRows],
+  );
+  const mainTableGridTemplateColumns = `${mainSeriesWidth}px repeat(${tablePeriods.length}, ${cellWidth}px)`;
+  const relatedTableGridTemplateColumns = `${relatedIndicatorWidth}px ${relatedDescriptorWidth}px repeat(${tablePeriods.length}, ${cellWidth}px)`;
   const highlightedPeriodSet = useMemo(() => new Set(highlightedPeriods), [highlightedPeriods]);
+  const relatedTableMinHeight = relatedTableHeightForRows(RELATED_TABLE_MIN_DATA_ROWS);
+  const relatedTableMaxHeight = relatedTableHeightForRows(activeDetail.related_indicators.length);
 
-  function periodHighlightClass(period: string) {
-    return highlightedPeriodSet.has(period)
-      ? "bg-[var(--color-warning-bg)] font-extrabold text-[var(--color-warning)] shadow-[inset_0_0_0_1px_rgb(217_154_0_/_22%)]"
-      : "";
-  }
+  useEffect(() => {
+    setRelatedTableHeight(relatedTableMaxHeight);
+  }, [activeDetail.review_item.review_item_id, relatedTableMaxHeight]);
 
   function handlePeriodClick(event: MouseEvent<HTMLElement>, period: string) {
-    if (!event.ctrlKey) {
-      return;
-    }
-
     event.preventDefault();
     event.stopPropagation();
     onToggleHighlightedPeriod(period);
@@ -158,7 +366,7 @@ export function ReviewSurface({
     const startHeight = relatedTableHeight;
 
     function handlePointerMove(pointerEvent: globalThis.PointerEvent) {
-      setRelatedTableHeight(clampWidth(startHeight + pointerEvent.clientY - startY, 86, 260));
+      setRelatedTableHeight(clampWidth(startHeight - (pointerEvent.clientY - startY), relatedTableMinHeight, relatedTableMaxHeight));
     }
 
     function stopResize() {
@@ -173,57 +381,28 @@ export function ReviewSurface({
   return (
     <>
       <div className="shrink-0 overflow-hidden rounded-md border border-[var(--color-border)] bg-white">
-        <div className="overflow-x-auto overflow-y-hidden pb-2" ref={mainTableRef} aria-label="Current previous published data table">
-          <div
-            className="grid min-h-5 w-max min-w-full items-center bg-[var(--color-panel-muted)] text-[10px] font-extrabold uppercase leading-none text-[var(--color-muted)]"
-            style={mainTableGridStyle}
-          >
-            <span className="sticky left-0 z-20 flex items-center justify-between gap-1 overflow-hidden bg-[var(--color-panel-muted)] px-2 py-0.5 text-ellipsis whitespace-nowrap shadow-[1px_0_0_var(--color-border)]">
-              Series
-              <button
-                aria-label="Resize series column"
-                className="absolute top-0 right-[-4px] z-30 h-full w-2 cursor-col-resize bg-transparent hover:bg-[rgb(0_76_151_/_14%)] focus-visible:bg-[rgb(0_76_151_/_18%)] focus-visible:outline-none"
-                onPointerDown={beginMainSeriesColumnResize}
-                type="button"
-              />
-            </span>
-            {tablePeriods.map((period) => (
-              <span
-                className={`overflow-hidden px-1.5 py-0.5 text-right text-ellipsis whitespace-nowrap ${periodHighlightClass(period)}`}
-                data-highlighted={highlightedPeriodSet.has(period) ? "true" : undefined}
-                key={period}
-                onClick={(event) => handlePeriodClick(event, period)}
-                onContextMenu={handlePeriodContextMenu}
-                title="Ctrl+click to toggle period highlight"
-              >
-                {period}
-              </span>
-            ))}
-          </div>
-          {tableRows.map((row) => (
-            <div
-              className="grid min-h-5 w-max min-w-full items-center border-t border-[var(--color-border)] text-[10px] leading-none"
-              key={row.label}
-              style={mainTableGridStyle}
-            >
-              <strong className="sticky left-0 z-10 overflow-hidden bg-white px-2 py-0.5 text-ellipsis whitespace-nowrap shadow-[1px_0_0_var(--color-border)]">
-                {row.label}
-              </strong>
-              {tablePeriods.map((period) => (
-                <span
-                  className={`overflow-hidden px-1.5 py-0.5 text-right text-ellipsis whitespace-nowrap tabular-nums ${periodHighlightClass(period)}`}
-                  data-highlighted={highlightedPeriodSet.has(period) ? "true" : undefined}
-                  key={period}
-                  onClick={(event) => handlePeriodClick(event, period)}
-                  onContextMenu={handlePeriodContextMenu}
-                  title="Ctrl+click to toggle period highlight"
-                >
-                  {formatNumber(valueByPeriod(row.points, period), decimalPlaces)}
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
+        <PeriodDataTable
+          ariaLabel="Current previous published data table"
+          className="overflow-y-hidden shadow-[inset_0_-1px_0_var(--color-border)]"
+          decimalPlaces={decimalPlaces}
+          gridTemplateColumns={mainTableGridTemplateColumns}
+          highlightedPeriodSet={highlightedPeriodSet}
+          leadingColumns={[
+            {
+              key: "series",
+              label: "Series",
+              onResizePointerDown: beginMainSeriesColumnResize,
+              resizeAriaLabel: "Resize series column",
+              stickyLeft: 0,
+              zIndexClassName: "z-20",
+            },
+          ]}
+          onPeriodClick={handlePeriodClick}
+          onPeriodContextMenu={handlePeriodContextMenu}
+          periods={tablePeriods}
+          rows={mainTableRows}
+          tableRef={mainTableRef}
+        />
       </div>
 
       <SeriesChart
@@ -234,92 +413,28 @@ export function ReviewSurface({
         indicatorName={activeItem.indicator_name}
         onAddHighlightedPeriodRange={onAddHighlightedPeriodRange}
         onRemoveHighlightedPeriodRange={onRemoveHighlightedPeriodRange}
+        onToggleHighlightedPeriod={onToggleHighlightedPeriod}
         seriesSet={activeDetail.main_series}
         visiblePeriods={tablePeriods}
       />
 
       <div className="shrink-0 overflow-hidden rounded-md border border-[var(--color-border)] bg-white">
+        <div
+          aria-label="Resize related indicators height"
+          className="h-2 cursor-row-resize border-b border-[var(--color-border)] bg-[var(--color-panel-muted)] hover:bg-[rgb(0_76_151_/_12%)]"
+          onPointerDown={beginRelatedTableHeightResize}
+          role="separator"
+        />
         <div className="border-b border-[var(--color-border)] bg-[var(--color-panel-muted)] px-2 py-1">
           <h4 className="text-[11px] font-extrabold uppercase text-[var(--color-muted)]">Related Indicators</h4>
         </div>
-        <div
-          className="overflow-auto pb-2"
-          ref={relatedTableRef}
-          aria-label="Related indicators table"
-          style={{ height: relatedTableHeight }}
-        >
-          <div
-            className="grid min-h-6 w-max min-w-full items-center bg-[var(--color-panel-muted)] text-[10px] font-extrabold uppercase text-[var(--color-muted)]"
-            style={relatedTableGridStyle}
-          >
-            <span className="sticky left-0 z-30 flex items-center justify-between gap-1 border-r border-[var(--color-border)] bg-[var(--color-panel-muted)] px-2 py-1">
-              Indicator
-              <button
-                aria-label="Resize indicator column"
-                className="absolute top-0 right-[-4px] z-40 h-full w-2 cursor-col-resize bg-transparent hover:bg-[rgb(0_76_151_/_14%)] focus-visible:bg-[rgb(0_76_151_/_18%)] focus-visible:outline-none"
-                onPointerDown={(event) => beginRelatedColumnResize(event, "indicator")}
-                type="button"
-              />
-            </span>
-            <span
-              className="sticky z-20 flex items-center justify-between gap-1 border-r border-[var(--color-border)] bg-[var(--color-panel-muted)] px-2 py-1"
-              style={descriptorStickyStyle}
-            >
-              Descriptor
-              <button
-                aria-label="Resize descriptor column"
-                className="absolute top-0 right-[-4px] z-40 h-full w-2 cursor-col-resize bg-transparent hover:bg-[rgb(0_76_151_/_14%)] focus-visible:bg-[rgb(0_76_151_/_18%)] focus-visible:outline-none"
-                onPointerDown={(event) => beginRelatedColumnResize(event, "descriptor")}
-                type="button"
-              />
-            </span>
-            {tablePeriods.map((period) => (
-              <span
-                className={`overflow-hidden px-1.5 py-1 text-right text-ellipsis whitespace-nowrap ${periodHighlightClass(period)}`}
-                data-highlighted={highlightedPeriodSet.has(period) ? "true" : undefined}
-                key={period}
-                onClick={(event) => handlePeriodClick(event, period)}
-                onContextMenu={handlePeriodContextMenu}
-                title="Ctrl+click to toggle period highlight"
-              >
-                {period}
-              </span>
-            ))}
-          </div>
-          {activeDetail.related_indicators.length > 0 ? (
-            activeDetail.related_indicators.map((related) => (
-              <div
-                className="grid min-h-6 w-max min-w-full items-center border-t border-[var(--color-border)] text-[11px]"
-                key={related.indicator_id}
-                style={relatedTableGridStyle}
-              >
-                <strong className="sticky left-0 z-20 overflow-hidden border-r border-[var(--color-border)] bg-white px-2 py-1 text-ellipsis whitespace-nowrap">
-                  {related.indicator_id}
-                </strong>
-                <span
-                  className="sticky z-10 overflow-hidden border-r border-[var(--color-border)] bg-white px-2 py-1 text-ellipsis whitespace-nowrap"
-                  style={descriptorStickyStyle}
-                >
-                  {related.descriptor ?? related.indicator_name}
-                </span>
-                {tablePeriods.map((period) => (
-                  <span
-                    className={`overflow-hidden px-1.5 py-1 text-right text-ellipsis whitespace-nowrap tabular-nums ${periodHighlightClass(period)}`}
-                    data-highlighted={highlightedPeriodSet.has(period) ? "true" : undefined}
-                    key={period}
-                    onClick={(event) => handlePeriodClick(event, period)}
-                    onContextMenu={handlePeriodContextMenu}
-                    title="Ctrl+click to toggle period highlight"
-                  >
-                    {formatNumber(valueByPeriod(related.current.points, period), decimalPlaces)}
-                  </span>
-                ))}
-              </div>
-            ))
-          ) : (
+        <PeriodDataTable
+          ariaLabel="Related indicators table"
+          decimalPlaces={decimalPlaces}
+          emptyState={
             <div
-              className="grid min-h-12 w-max min-w-full items-center border-t border-[var(--color-border)] bg-white text-[11px]"
-              style={relatedTableGridStyle}
+              className="grid min-h-12 w-max min-w-full items-center bg-white shadow-[inset_0_1px_0_var(--color-border)]"
+              style={{ gridTemplateColumns: relatedTableGridTemplateColumns }}
             >
               <div
                 className="flex items-center gap-2 px-2 py-2 text-[var(--color-muted)]"
@@ -329,13 +444,33 @@ export function ReviewSurface({
                 <span>No related indicators available for this indicator.</span>
               </div>
             </div>
-          )}
-        </div>
-        <div
-          aria-label="Resize related indicators height"
-          className="h-2 cursor-row-resize border-t border-[var(--color-border)] bg-[var(--color-panel-muted)] hover:bg-[rgb(0_76_151_/_12%)]"
-          onPointerDown={beginRelatedTableHeightResize}
-          role="separator"
+          }
+          gridTemplateColumns={relatedTableGridTemplateColumns}
+          highlightedPeriodSet={highlightedPeriodSet}
+          leadingColumns={[
+            {
+              key: "indicator",
+              label: "Indicator",
+              onResizePointerDown: (event) => beginRelatedColumnResize(event, "indicator"),
+              resizeAriaLabel: "Resize indicator column",
+              stickyLeft: 0,
+              zIndexClassName: "z-30",
+            },
+            {
+              key: "descriptor",
+              label: "Descriptor",
+              onResizePointerDown: (event) => beginRelatedColumnResize(event, "descriptor"),
+              resizeAriaLabel: "Resize descriptor column",
+              stickyLeft: relatedIndicatorWidth,
+              zIndexClassName: "z-20",
+            },
+          ]}
+          onPeriodClick={handlePeriodClick}
+          onPeriodContextMenu={handlePeriodContextMenu}
+          periods={tablePeriods}
+          rows={relatedTableRows}
+          tableRef={relatedTableRef}
+          viewportStyle={{ height: relatedTableHeight }}
         />
       </div>
     </>

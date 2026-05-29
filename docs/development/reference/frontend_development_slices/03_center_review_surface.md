@@ -15,7 +15,7 @@ The center surface should feel like the main data-review workspace, not a metada
 - indicator code, indicator name, and desk series shown together inside the line chart frame as the chart title area,
 - formula displayed inside the line chart container at the top,
 - ECharts line chart,
-- chart-level x-axis slider controlling only the line chart viewport,
+- chart-level x-axis slider controlling only the line chart viewport, without showing a trend/data-shadow strip,
 - related indicators table below the line chart,
 - related indicators table columns for indicator, descriptor, then period values,
 - resizable indicator and descriptor columns in the related indicators table,
@@ -47,20 +47,28 @@ The center surface should feel like the main data-review workspace, not a metada
 - Published line color is light grey and should render below current and previous.
 - Chart point markers should be small, solid circles.
 - The chart should not zoom on ordinary mouse-wheel or vertical trackpad scrolling; only the explicit chart x-axis slider changes chart viewport.
+- The chart x-axis slider should reserve enough right-side space so end labels do not overflow the chart frame.
 - Main and related indicator tables should use compact period columns to show as many periods as practical.
+- Main and related indicator tables should share one reusable period-table implementation for period headers, numeric cells, decimal formatting, highlighting, click behavior, typography, and spacing. Each table may pass its own leading/sticky columns, such as `Series` for the main table and `Indicator`/`Descriptor` for related indicators.
+- Period value columns in both tables should automatically widen when formatted values require more space, such as 9 decimal places, so numeric values remain fully visible rather than wrapping or being ellipsized. Horizontal scrolling is acceptable when expanded period columns exceed the panel width.
 - Main and related indicator tables should reserve bottom space so horizontal scrollbars do not overlap table content.
 - Main and related indicator tables should default-scroll to the newest/rightmost period.
 - The top table `Series` column should resize within a modest range so it does not consume unnecessary period-column space.
+- Top table row labels should display as `CURRENT`, `PREVIOUS`, and `PUBLISHED`.
+- Hovering `PREVIOUS` should explain that it reflects the data that was last signed-off.
+- Hovering `PUBLISHED` should explain that it reflects the data from the most recent WEO publication.
+- Top table horizontal row separators and the bottom table frame should remain visible, but separators should be drawn without creating padding gaps through highlighted cells.
 - Indicator code should use a stronger title treatment, with more visual weight than table/navigation labels.
 - Indicator code and indicator name should have enough vertical padding and spacing to read as the chart title area rather than table text.
-- Decimal-place controls live in the top `SessionHeader`, next to settings, and apply to the main and related tables.
+- Decimal-place controls live in the top `SessionHeader`, next to settings, allow 0-9 decimal places, and apply to the main and related tables.
 - The main table does not need its own top control row.
 - Annual chart/table mock data should cover 1980-2031 by default.
 - Quarterly chart/table mock data should cover 1990Q1-2027Q4 by default.
 - Related indicators filter by indicator only.
 - Mock related indicators should cover realistic row counts, generally 2-8 rows when related indicators exist.
 - Related indicators table indicator and descriptor columns should resize by dragging their column borders, without extra visible double separator bars. The current resize interaction is sufficient for this slice and does not require further refinement now.
-- Related indicators table height should be manually resizable. Its minimum height should show about two rows, and when more than four rows exist the table should scroll internally rather than expanding the whole page.
+- Related indicators table height defaults to the height needed to show all related rows for the active pair, bounded by the current pair's row count.
+- Related indicators table height is manually resizable from its top separator, similar to panel resizing. Its minimum height shows two data rows and its maximum height shows all related rows for the active pair; extra height comes from compressing the chart area.
 - If no related indicators exist, show a compact empty state inside the related indicators table instead of leaving a blank area.
 - Additional y-axis range padding refinement is not required for this slice.
 

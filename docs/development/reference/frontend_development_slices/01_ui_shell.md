@@ -10,7 +10,7 @@ Create the first visible workbench shell.
 - `SessionHeader`,
 - `Other Settings` placeholder,
 - tool name/logo placeholder in the top-left of the header,
-- decimal-place controls in the top header next to settings,
+- decimal-place controls in the top header next to settings, supporting 0-9 decimal places,
 - font-size controls in the top header near settings,
 - searchable country filter in the top header,
 - base tokens and global layout styles,
@@ -49,7 +49,7 @@ Create the first visible workbench shell.
 - Right draft panel remains user-resizable within configured min/max bounds.
 - Resize handles should be visually narrow and should not waste horizontal workspace.
 - The right draft panel maximum should stay modest and must not exceed one third of the viewport width on desktop layouts.
-- Decimal-place controls live in the top `SessionHeader`, not inside the center table.
+- Decimal-place controls live in the top `SessionHeader`, not inside the center table, and allow 0-9 decimal places.
 - Font-size controls live in the top `SessionHeader` near settings.
 - Font-size controls support the default size plus up to four larger steps.
 - Font-size controls do not change the top header's own font size.

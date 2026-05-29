@@ -244,7 +244,7 @@ export function SessionHeader({
             <button
               aria-label="Increase decimal places"
               className="inline-grid h-6 min-w-8 place-items-center rounded-sm border border-[var(--color-border-strong)] bg-[var(--color-panel)] px-2 text-xs font-extrabold leading-none text-[var(--color-ink)] hover:border-[var(--color-brand-primary)] disabled:opacity-40"
-              disabled={decimalPlaces === 3}
+              disabled={decimalPlaces === 9}
               onClick={onIncreaseDecimalPlaces}
               type="button"
             >
